@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Task Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      CSP restritiva: o renderer nao faz requisicao de rede nenhuma. Todo acesso
+      a dados passa pelo IPC, entao nao ha motivo para permitir conexoes externas.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' data:; font-src 'self' data:; connect-src 'self'"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
