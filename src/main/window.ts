@@ -37,7 +37,7 @@ export function createWindow(options: { startHidden: boolean; closeToTray: () =>
     backgroundColor: '#0b0f19',
     title: 'Task Manager',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
