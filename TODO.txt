@@ -1,0 +1,170 @@
+TASK MANAGER - PENDENCIAS E ANOTACOES
+=====================================
+Ultima atualizacao: 03/08/2026
+
+
+-------------------------------------------------------------------------------
+1. PENDENTE - PRECISA DE ACAO SUA
+-------------------------------------------------------------------------------
+
+[ ] CONFIGURAR O NEON
+    Copiar .env.example para .env e colar a connection string do Neon em
+    DATABASE_URL. Depois rodar `npm run db:push` e reiniciar o app.
+    Enquanto isso nao for feito o app funciona 100%, mas salva apenas neste
+    computador (indicador no topo mostra "Somente local").
+    -> Sem isso os itens 2, 3 e 4 dos testes abaixo nao podem ser executados.
+
+
+-------------------------------------------------------------------------------
+2. PENDENTE - AJUSTES TECNICOS QUE FICARAM PARA DEPOIS
+-------------------------------------------------------------------------------
+
+[ ] REGERAR O INSTALADOR APOS MOVER O radix-ui
+    O pacote radix-ui foi movido de "dependencies" para "devDependencies",
+    porque ele so e usado no renderer, que o Vite ja empacota. Estava sendo
+    copiado duas vezes e inflando o instalador.
+    O instalador atual (96 MB) foi gerado ANTES dessa mudanca.
+
+    Para aplicar:
+        1. Fechar o app se estiver aberto (inclusive o icone da bandeja)
+        2. Remover a pasta dist/
+        3. npm run build:win
+
+    Obs.: se rodar sem fechar o app antes, o build falha com
+    "EPERM: operation not permitted, rename dist\win-unpacked.tmp".
+    Isso e o Windows segurando os arquivos, nao um bug do projeto.
+
+[ ] ASSINATURA DIGITAL DO INSTALADOR
+    O .exe nao e assinado, entao o SmartScreen do Windows exibe aviso na
+    primeira execucao. Para resolver e preciso um certificado de assinatura
+    de codigo, configurado em win.certificateFile no electron-builder.yml.
+
+[ ] TAMANHO DO BUNDLE DO RENDERER
+    O chunk principal esta com ~1.5 MB (aviso do Vite). Nao afeta um app
+    desktop (carrega do disco local), mas da para reduzir com code splitting
+    por rota se quisermos.
+
+[ ] NORMALIZACAO DE FIM DE LINHA (CRLF/LF)
+    O git avisa "LF will be replaced by CRLF" em todo commit. Resolve-se com
+    um arquivo .gitattributes definindo "* text=auto eol=lf".
+    Cosmetico, nao quebra nada.
+
+[ ] AVISO DO npm SOBRE INSTALL SCRIPTS
+    O npm 11 bloqueia scripts de instalacao de alguns pacotes (esbuild,
+    electron-winstaller) e exibe aviso. Nada quebrou por causa disso - build,
+    typecheck e empacotamento passaram. Se algum dia der problema:
+        npm approve-scripts --allow-scripts-pending
+
+
+-------------------------------------------------------------------------------
+3. IDEIAS / MELHORIAS FUTURAS (nao sao problemas)
+-------------------------------------------------------------------------------
+
+[ ] Subtarefas (checklist dentro de uma tarefa)
+[ ] Anexar arquivos ou links a uma tarefa
+[ ] Arrastar e soltar para reordenar / mudar de dia no calendario
+[ ] Visao de semana no calendario, alem da mensal
+[ ] Exportar tarefas para CSV / importar de outro app
+[ ] Atalhos globais de teclado (ex.: Ctrl+Shift+N cria tarefa de qualquer lugar)
+[ ] Recuperacao de senha (hoje nao existe - a senha e so hash local + Neon)
+[ ] Auto-update do app (electron-updater ja e compativel com o NSIS gerado)
+[ ] Suite de testes automatizados (ver secao 5)
+
+
+-------------------------------------------------------------------------------
+4. TESTES JA EXECUTADOS - PASSARAM
+-------------------------------------------------------------------------------
+
+Feitos rodando o app de verdade (Electron + Playwright), nao apenas build:
+
+[x] Typecheck do processo principal e do renderer - sem erros
+[x] Build de producao (electron-vite) - sem erros
+[x] App abre na tela de login
+[x] Criar conta pela aba "Criar conta"
+[x] Sessao persistida: reabrir o app entra direto no dashboard
+[x] Banco local criado em %APPDATA%\task-manager\task-manager.db
+[x] Seis categorias padrao criadas junto com a conta
+[x] Criar tarefa com titulo, descricao, prazo e lembrete
+[x] Tarefa aparece no dashboard, na lista e no calendario
+[x] Contadores do dashboard corretos (para hoje / atrasadas / importantes)
+[x] Sidebar recolhe e expande pelo botao do topo
+[x] Navegacao por todas as 7 telas sem erro de console
+[x] Troca de tema para escuro aplica em toda a interface
+[x] Indicador de sync mostra "Somente local" sem DATABASE_URL
+[x] Toast avisa "Sincronizacao desativada" ao tentar sincronizar sem Neon
+[x] Empacotamento NSIS gera o instalador (dist/Task Manager Setup 1.0.0.exe)
+[x] App EMPACOTADO abre e cria o banco local corretamente
+[x] Icone da bandeja incluido nos resources do pacote
+
+
+-------------------------------------------------------------------------------
+5. TESTES QUE AINDA NAO FORAM FEITOS
+-------------------------------------------------------------------------------
+
+Nao foram executados por dependerem do Neon configurado, de tempo real ou de
+instalar o app de fato:
+
+[ ] SINCRONIZACAO COM O NEON (precisa da DATABASE_URL)
+    - Criar tarefa e conferir que a linha chega na tabela tasks do Neon
+    - Editar em uma maquina e ver a alteracao aparecer na outra
+    - Excluir e conferir que o deleted_at propaga
+
+[ ] TESTE OFFLINE COMPLETO (precisa do Neon configurado)
+    - Desligar a rede, criar e editar tarefas
+    - Conferir que o contador "pendentes" sobe no indicador do topo
+    - Religar a rede e confirmar que tudo subiu para o Neon
+
+[ ] CONFLITO / LAST-WRITE-WINS (precisa de duas maquinas ou dois perfis)
+    - Editar a mesma tarefa nos dois lados offline
+    - Reconectar e confirmar que a versao mais recente venceu
+
+[ ] LOGIN EM MAQUINA NOVA (precisa do Neon)
+    - Entrar com a mesma conta em outro computador
+    - Confirmar que o usuario e as tarefas sao baixados do Neon
+
+[ ] ALARME DISPARANDO DE VERDADE
+    - Criar tarefa com prazo em ~2 minutos e lembrete de 1 minuto
+    - Confirmar o toast nativo do Windows + o som
+    - Confirmar que clicar no toast abre o app na tarefa
+
+[ ] BANDEJA COM A JANELA FECHADA
+    - Fechar a janela com "Fechar para a bandeja" ligado
+    - Confirmar que o app continua na bandeja e o alarme ainda dispara
+    - Testar as opcoes do menu do botao direito
+
+[ ] INICIALIZACAO AUTOMATICA COM O WINDOWS (so funciona instalado)
+    - Instalar o .exe
+    - Ligar "Iniciar com o Windows" nas configuracoes
+    - Conferir em Gerenciador de Tarefas > Inicializar
+    - Reiniciar o Windows e confirmar que o app sobe na bandeja
+
+[ ] TAREFA RECORRENTE GERANDO A PROXIMA
+    - Criar tarefa com repeticao semanal e concluir
+    - Confirmar que a proxima ocorrencia nasce com o prazo avancado
+
+
+-------------------------------------------------------------------------------
+6. ANOTACOES TECNICAS (para nao esquecer o motivo)
+-------------------------------------------------------------------------------
+
+- BANCO LOCAL usa node:sqlite (embutido no Node 24 do Electron 43), e nao
+  better-sqlite3. Motivo: o better-sqlite3 exige node-gyp + Visual Studio
+  Build Tools, que nao existem nesta maquina - o npm install falhava.
+  Beneficio: nenhuma dependencia nativa, install e build limpos em qualquer PC.
+
+- O PROCESSO PRINCIPAL e CommonJS (o package.json NAO tem "type": "module").
+  Motivo: o modulo 'electron' nao expoe named exports quando o main e
+  carregado como ESM - "import { app, BrowserWindow } from 'electron'" quebra
+  em tempo de execucao.
+
+- A SESSAO usa fs + JSON no lugar do electron-store. Motivo: o electron-store
+  v11 e ESM-only e nao carrega no bundle CommonJS do main.
+
+- O SOM DO ALARME e sintetizado pela Web Audio API, nao e um arquivo .mp3.
+  Motivo: a CSP bloqueia media-src externo e evita somar peso ao pacote.
+
+- O ALARME roda no processo principal, nao no renderer. Motivo: se rodasse na
+  interface, fechar a janela mataria os alarmes.
+
+- A DATABASE_URL nunca sai do processo principal. O renderer roda com
+  contextIsolation e so enxerga os canais declarados em src/preload/index.ts.
