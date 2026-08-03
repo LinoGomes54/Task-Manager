@@ -1,0 +1,43 @@
+appId: com.lino.taskmanager
+productName: Task Manager
+copyright: Copyright © 2026 Lino
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - out/**/*
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintrc,.prettierrc,tsconfig.json,tsconfig.*.json,components.json,drizzle.config.ts}'
+  - '!{.env,.env.*,.npmrc,.mcp.json}'
+  - '!{dev-app-update.yml,CLAUDE.MD,README.md,docs}'
+
+extraResources:
+  - from: build/icon.png
+    to: icon.png
+
+asarUnpack:
+  - resources/**
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  # Sem assinatura de codigo: o SmartScreen vai avisar na primeira execucao.
+  # Para publicar de verdade, configure um certificado em `win.certificateFile`.
+  signAndEditExecutable: true
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Task Manager
+  deleteAppDataOnUninstall: false
+
+npmRebuild: false
