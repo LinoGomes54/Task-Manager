@@ -1,0 +1,26 @@
+node_modules/
+dist/
+out/
+.vite/
+
+# Variaveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Banco local gerado em runtime
+*.db
+*.db-journal
+*.sqlite
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# Editores / SO
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
