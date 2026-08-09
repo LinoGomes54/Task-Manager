@@ -1,0 +1,95 @@
+// Schema do banco remoto (Neon / Postgres).
+//
+// O Prisma e usado aqui APENAS para versionar e aplicar migrations — o app nao
+// carrega o Prisma Client em tempo de execucao. O processo principal continua
+// falando com o Neon via `@neondatabase/serverless` sobre HTTP, com SQL cru
+// (`src/main/sync/engine.ts`), porque:
+//
+//  - o Prisma Client traz um query engine nativo, que precisaria ser desempacotado
+//    do asar no build do Electron — exatamente o tipo de dependencia binaria que
+//    este projeto evita (o banco local usa `node:sqlite` pelo mesmo motivo);
+//  - o driver do Neon fala HTTP, sem manter conexao TCP aberta, o que combina com
+//    um app desktop que fica horas ocioso e sincroniza em rajadas;
+//  - os UPSERT com condicao de last-write-wins ficam mais diretos em SQL cru.
+//
+// Os nomes das colunas sao mapeados para snake_case com `@map`, porque e nesse
+// formato que o SQL do motor de sincronizacao — e o SQLite local — os referenciam.
+//
+// NAO ha foreign keys de proposito: o push envia as tabelas em lotes separados, e
+// uma FK rejeitaria uma tarefa cuja categoria ainda nao subiu. A integridade e
+// garantida pela ordem de sincronizacao em SYNC_TABLES.
+
+// A partir do Prisma 7 a connection string sai do schema e vai para o
+// `prisma.config.ts`, entregue ao CLI por um driver adapter.
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([updatedAt], map: "idx_users_updated")
+  @@map("users")
+}
+
+model Category {
+  id        String    @id
+  userId    String    @map("user_id")
+  name      String
+  color     String    @default("#64748b")
+  icon      String?
+  createdAt DateTime  @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([userId, updatedAt], map: "idx_categories_user_upd")
+  @@map("categories")
+}
+
+model Task {
+  id                  String    @id
+  userId              String    @map("user_id")
+  categoryId          String?   @map("category_id")
+  title               String
+  description         String?
+  priority            String    @default("medium")
+  status              String    @default("pending")
+  isImportant         Boolean   @default(false) @map("is_important")
+  dueAt               DateTime? @map("due_at") @db.Timestamptz(6)
+  remindMinutesBefore Int       @default(15) @map("remind_minutes_before")
+  notifiedAt          DateTime? @map("notified_at") @db.Timestamptz(6)
+  completedAt         DateTime? @map("completed_at") @db.Timestamptz(6)
+  recurrence          String    @default("none")
+  recurrenceInterval  Int       @default(1) @map("recurrence_interval")
+  recurrenceUntil     DateTime? @map("recurrence_until") @db.Timestamptz(6)
+  parentTaskId        String?   @map("parent_task_id")
+  createdAt           DateTime  @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([userId, updatedAt], map: "idx_tasks_user_upd")
+  @@index([userId, dueAt], map: "idx_tasks_user_due")
+  @@map("tasks")
+}
+
+model UserSettings {
+  userId               String    @id @map("user_id")
+  autoLaunch           Boolean   @default(false) @map("auto_launch")
+  startMinimized       Boolean   @default(false) @map("start_minimized")
+  closeToTray          Boolean   @default(true) @map("close_to_tray")
+  notificationsEnabled Boolean   @default(true) @map("notifications_enabled")
+  soundEnabled         Boolean   @default(true) @map("sound_enabled")
+  reminderLeadMinutes  Int       @default(15) @map("reminder_lead_minutes")
+  theme                String    @default("system")
+  createdAt            DateTime  @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("user_settings")
+}
