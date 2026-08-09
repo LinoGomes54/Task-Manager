@@ -1,7 +1,7 @@
 import { hashSync, compareSync } from 'bcryptjs'
 import { queryOne, execute, transaction, now, newId } from '../db/local'
 import { isRemoteConfigured } from '../db/remote'
-import { fetchRemoteUserByEmail, pushNewUser, remoteEmailExists } from '../sync/engine'
+import { describeError, fetchRemoteUserByEmail, pushNewUser, remoteEmailExists } from '../sync/engine'
 import { seedDefaultCategories } from './categories.service'
 import { createDefaultSettings, getSettings } from './settings.service'
 import { saveSession, clearSession, getSessionUserId } from '../session'
@@ -59,8 +59,13 @@ export async function register(
         throw new Error('Já existe uma conta com esse e-mail.')
       }
     } catch (err) {
-      // Erro de duplicidade sobe; falha de rede vira uma mensagem clara.
+      // Erro de duplicidade sobe como esta; o resto vira uma mensagem acionavel
+      // — "tabelas nao existem" e "sem internet" pedem acoes bem diferentes.
       if (err instanceof Error && err.message.includes('Já existe')) throw err
+
+      const detail = describeError(err)
+      if (detail.includes('db:deploy')) throw new Error(detail)
+
       throw new Error(
         'Não foi possível criar a conta sem internet. Conecte-se e tente novamente.'
       )

@@ -1,5 +1,5 @@
 import { queryAll, queryOne, execute, transaction, now } from '../db/local'
-import { getRemote, isRemoteConfigured, REMOTE_SCHEMA_SQL } from '../db/remote'
+import { getRemote, isRemoteConfigured } from '../db/remote'
 import {
   SYNC_TABLES,
   SYNC_COLUMNS,
@@ -41,7 +41,6 @@ let state: SyncState = {
 }
 
 let running = false
-let schemaEnsured = false
 let listener: ((state: SyncState) => void) | null = null
 
 export function onSyncStateChange(fn: (state: SyncState) => void): void {
@@ -223,17 +222,20 @@ async function pullTable(table: SyncTable, userId: string): Promise<number> {
 /* Orquestracao                                                        */
 /* ------------------------------------------------------------------ */
 
-async function ensureRemoteSchema(): Promise<void> {
-  if (schemaEnsured) return
-  const sql = getRemote()
-  if (!sql) return
+/**
+ * Traduz erros do Postgres em algo acionavel na interface.
+ *
+ * O caso que mais importa e o `42P01` (relation does not exist): significa que as
+ * migrations do Prisma nunca foram aplicadas nesse banco. Sem esta traducao, o
+ * usuario veria apenas `relation "tasks" does not exist` e nao saberia o que fazer.
+ */
+export function describeError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err)
 
-  // O DDL vai em statements separados: o endpoint HTTP do Neon aceita um por chamada.
-  for (const statement of REMOTE_SCHEMA_SQL.split(';')) {
-    const trimmed = statement.trim()
-    if (trimmed) await sql.query(trimmed)
+  if (/does not exist|42P01/i.test(message)) {
+    return 'As tabelas ainda não existem no Neon. Rode `npm run db:deploy` para aplicar as migrations.'
   }
-  schemaEnsured = true
+  return message
 }
 
 /**
@@ -251,8 +253,6 @@ export async function runSync(userId: string): Promise<SyncState> {
   setState({ configured: true, status: 'syncing', lastError: null })
 
   try {
-    await ensureRemoteSchema()
-
     // Push antes de pull: o que foi feito offline tem que chegar la
     // antes de compararmos versoes na volta.
     for (const table of SYNC_TABLES) await pushTable(table, userId)
@@ -260,7 +260,7 @@ export async function runSync(userId: string): Promise<SyncState> {
 
     setState({ status: 'idle', lastSyncedAt: now(), lastError: null })
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = describeError(err)
     const offline = /fetch|network|ENOTFOUND|ECONNREFUSED|EAI_AGAIN|timeout/i.test(message)
     setState({ status: offline ? 'offline' : 'error', lastError: message })
   } finally {
@@ -273,7 +273,6 @@ export async function runSync(userId: string): Promise<SyncState> {
 /** Envia um usuario recem-criado ao Neon. Usado no cadastro, que exige internet. */
 export async function pushNewUser(userId: string): Promise<void> {
   if (!isRemoteConfigured()) return
-  await ensureRemoteSchema()
   await pushTable('users', userId)
   await pushTable('user_settings', userId)
   await pushTable('categories', userId)
@@ -286,7 +285,6 @@ export async function fetchRemoteUserByEmail(
   const sql = getRemote()
   if (!sql) return null
 
-  await ensureRemoteSchema()
   const rows = (await sql.query(
     `SELECT ${SYNC_COLUMNS.users.join(', ')} FROM users
      WHERE lower(email) = lower($1) AND deleted_at IS NULL LIMIT 1`,
