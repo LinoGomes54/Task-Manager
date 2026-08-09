@@ -11,9 +11,11 @@ files:
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintrc,.prettierrc,tsconfig.json,tsconfig.*.json,components.json,drizzle.config.ts}'
+  - '!{.eslintrc,.prettierrc,tsconfig.json,tsconfig.*.json,components.json}'
   - '!{.env,.env.*,.npmrc,.mcp.json}'
-  - '!{dev-app-update.yml,CLAUDE.MD,README.md,docs}'
+  - '!{dev-app-update.yml,CLAUDE.MD,README.md,TODO.txt,docs}'
+  # O Prisma e so ferramenta de desenvolvimento — nada dele vai para o instalador.
+  - '!{prisma,prisma.config.ts}'
 
 extraResources:
   - from: build/icon.png
