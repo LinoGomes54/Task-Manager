@@ -180,7 +180,7 @@ sem abrir a janela, mas já vigiando seus prazos.
 | Estado de interface | **Zustand** | Só para o que é realmente global e simples: sessão, tema e o diálogo de tarefa (aberto de cinco lugares diferentes). Sem provider, sem boilerplate. |
 | Banco local | **`node:sqlite`** | **Trocado do `better-sqlite3` durante o desenvolvimento.** O `better-sqlite3` exige compilação nativa via node-gyp, que falhou aqui por ausência do Visual Studio Build Tools. O `node:sqlite` é o SQLite **embutido no Node 24**, que é o Node que acompanha o Electron 43 — mesma API síncrona, zero compilação, `npm install` limpo em qualquer máquina. |
 | Banco remoto | **Neon + `@neondatabase/serverless`** | Foi o pedido. O driver oficial fala com o Neon por **HTTP**, sem manter conexão TCP aberta — ideal para um app desktop que fica horas ocioso e sincroniza em rajadas. |
-| Schema do Neon | **Drizzle ORM** | Usado para **declarar e migrar** o schema (`npm run db:push`). As consultas de sincronização são SQL cru, porque os `UPSERT` com condição de last-write-wins ficam mais claros e diretos escritos à mão. |
+| Migrations do Neon | **Prisma Migrate** | Usado **só em desenvolvimento**, para versionar o schema. Cada alteração vira um arquivo em `prisma/migrations/`, com histórico auditável e aplicação previsível em produção via `migrate deploy` — diferente de um `push` que sincroniza o schema sem deixar registro. **O Prisma Client não é usado em runtime**: ele traria um query engine nativo que precisaria sair do asar no empacotamento, justamente o tipo de dependência binária que este projeto evita. |
 | Senha | **bcryptjs** | Implementação em JavaScript puro. O `bcrypt` nativo traria de volta exatamente o problema de compilação que evitamos ao sair do `better-sqlite3`. |
 | Datas | **date-fns + locale pt-BR** | Formatação em português e cálculo da grade do calendário. Tree-shakeable, ao contrário do Moment. |
 | Empacotamento | **electron-builder (NSIS)** | Gera o instalador `.exe` com atalhos. O instalador é **obrigatório** para o autostart funcionar de verdade — só assim o registro do Windows aponta para o app, e não para o binário do Electron. |
@@ -285,22 +285,42 @@ cp .env.example .env
 DATABASE_URL=postgresql://usuario:senha@ep-xxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
 ```
 
-4. Crie as tabelas:
+4. Aplique as migrations:
 
 ```bash
-npm run db:push
+npm run db:deploy
 ```
 
 5. Reinicie o app.
 
-> O `.env` está no `.gitignore` e nunca é commitado.
+> ⚠️ **Cole a string no `.env`, nunca no `.env.example`.** O `.gitignore` protege o
+> `.env`; o `.env.example` **é versionado** e iria parar no GitHub com a sua senha.
 >
-> O passo 4 é opcional: se as tabelas não existirem, o app as cria sozinho na primeira
-> sincronização. O `db:push` existe para quando você quiser aplicar mudanças de schema
-> de forma controlada.
+> **O passo 4 é obrigatório.** O app não cria mais as tabelas sozinho — quem manda no
+> schema é o Prisma Migrate. Se as tabelas não existirem, a sincronização avisa
+> exatamente isso, em vez de criar por conta própria uma versão possivelmente
+> desatualizada do schema.
 >
 > **Sem `DATABASE_URL` o app funciona normalmente** — só fica salvo neste computador,
 > e a tela de Configurações mostra a sincronização como “Não configurado”.
+
+### Alterando o schema depois
+
+Edite `prisma/schema.prisma` e rode:
+
+```bash
+npm run db:migrate      # cria a migration e aplica no seu banco de desenvolvimento
+```
+
+Isso gera um arquivo novo em `prisma/migrations/`, que **deve ser commitado**. Em outra
+máquina (ou em produção), `npm run db:deploy` aplica as pendentes na ordem correta.
+
+Ao mudar o schema, lembre de refletir a alteração em **três lugares**, porque o app não
+usa o Prisma Client em runtime:
+
+1. `prisma/schema.prisma` — o banco remoto
+2. `src/main/db/schema.ts` — o DDL do SQLite local e as listas `SYNC_COLUMNS`
+3. `src/shared/types.ts` — os tipos usados pelos dois processos
 
 ---
 
@@ -320,6 +340,10 @@ da bandeja) e apague a pasta `dist/`.
 ## Estrutura de pastas
 
 ```
+prisma/
+├── schema.prisma            schema do Neon — fonte da verdade das migrations
+└── migrations/              histórico versionado, aplicado com db:deploy
+
 src/
 ├── main/                    processo principal (Node)
 │   ├── index.ts             bootstrap: banco → IPC → janela → bandeja → alarme → sync
@@ -331,8 +355,7 @@ src/
 │   ├── db/
 │   │   ├── local.ts         conexão SQLite e helpers de consulta
 │   │   ├── schema.ts        DDL local e o mapa de colunas do sync
-│   │   ├── remote.ts        conexão com o Neon e DDL remoto
-│   │   └── schema.remote.ts schema Drizzle (usado pelo db:push)
+│   │   └── remote.ts        conexão com o Neon
 │   ├── sync/engine.ts       push, pull e last-write-wins
 │   ├── services/            regras de auth, tarefas, categorias e configurações
 │   └── ipc/index.ts         registro de todos os handlers
@@ -359,8 +382,10 @@ src/
 | `npm run build:win` | Gera o instalador `.exe` em `dist/` |
 | `npm run build:unpack` | Gera só a pasta descompactada |
 | `npm run typecheck` | Verifica os tipos do processo principal e da interface |
-| `npm run db:push` | Aplica o schema no Neon |
-| `npm run db:generate` | Gera arquivos de migração do Drizzle |
+| `npm run db:deploy` | Aplica as migrations pendentes no Neon (é o que você roda no dia a dia) |
+| `npm run db:migrate` | Cria uma nova migration a partir de mudanças no `schema.prisma` |
+| `npm run db:status` | Mostra quais migrations já foram aplicadas |
+| `npm run db:studio` | Abre o Prisma Studio para inspecionar os dados |
 
 ---
 

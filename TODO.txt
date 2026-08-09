@@ -7,12 +7,20 @@ Ultima atualizacao: 03/08/2026
 1. PENDENTE - PRECISA DE ACAO SUA
 -------------------------------------------------------------------------------
 
-[ ] CONFIGURAR O NEON
-    Copiar .env.example para .env e colar a connection string do Neon em
-    DATABASE_URL. Depois rodar `npm run db:push` e reiniciar o app.
-    Enquanto isso nao for feito o app funciona 100%, mas salva apenas neste
-    computador (indicador no topo mostra "Somente local").
-    -> Sem isso os itens 2, 3 e 4 dos testes abaixo nao podem ser executados.
+[x] CONFIGURAR O NEON  -- FEITO em 09/08/2026
+    .env preenchido com a DATABASE_URL e migrations aplicadas via Prisma.
+    Sincronizacao testada de ponta a ponta: conta e tarefa criadas no app
+    chegaram nas tabelas do Neon.
+
+[ ] CRIAR A SUA CONTA DE VERDADE
+    O banco esta VAZIO (as contas usadas no teste foram removidas).
+    Abrir o app com `npm run dev` e usar a aba "Criar conta".
+
+[!] ATENCAO - NUNCA COLE A CONNECTION STRING NO .env.example
+    O .gitignore protege o .env, mas o .env.example E VERSIONADO e vai para o
+    GitHub. Isso quase aconteceu em 09/08/2026 - a string real foi colada no
+    .env.example e restaurada antes de qualquer commit. O historico do git
+    esta limpo (verificado com `git log -S`), mas vale redobrar o cuidado.
 
 
 -------------------------------------------------------------------------------
@@ -96,6 +104,14 @@ Feitos rodando o app de verdade (Electron + Playwright), nao apenas build:
 [x] App EMPACOTADO abre e cria o banco local corretamente
 [x] Icone da bandeja incluido nos resources do pacote
 
+--- apos a migracao para o Prisma (09/08/2026) ---
+[x] Prisma Migrate cria as 4 tabelas + _prisma_migrations no Neon
+[x] SQL gerado pela migration bate com o schema anterior (conferido linha a linha)
+[x] Cadastro consulta o Neon para reservar o e-mail
+[x] Tarefa criada no app chega na tabela tasks do Neon
+[x] Categorias padrao (6) sincronizam junto com a conta
+[x] Typecheck e build seguem limpos sem o Drizzle
+
 
 -------------------------------------------------------------------------------
 5. TESTES QUE AINDA NAO FORAM FEITOS
@@ -104,12 +120,12 @@ Feitos rodando o app de verdade (Electron + Playwright), nao apenas build:
 Nao foram executados por dependerem do Neon configurado, de tempo real ou de
 instalar o app de fato:
 
-[ ] SINCRONIZACAO COM O NEON (precisa da DATABASE_URL)
-    - Criar tarefa e conferir que a linha chega na tabela tasks do Neon
+[ ] SINCRONIZACAO - O QUE AINDA FALTA
+    (o push basico ja foi validado - ver secao 4)
     - Editar em uma maquina e ver a alteracao aparecer na outra
     - Excluir e conferir que o deleted_at propaga
 
-[ ] TESTE OFFLINE COMPLETO (precisa do Neon configurado)
+[ ] TESTE OFFLINE COMPLETO
     - Desligar a rede, criar e editar tarefas
     - Conferir que o contador "pendentes" sobe no indicador do topo
     - Religar a rede e confirmar que tudo subiu para o Neon
@@ -168,3 +184,24 @@ instalar o app de fato:
 
 - A DATABASE_URL nunca sai do processo principal. O renderer roda com
   contextIsolation e so enxerga os canais declarados em src/preload/index.ts.
+
+- MIGRATIONS usam PRISMA, mas o PRISMA CLIENT NAO e usado em runtime. Motivo:
+  o client traz um query engine nativo que precisaria ser desempacotado do
+  asar no build - a mesma dependencia binaria que evitamos ao sair do
+  better-sqlite3. O app continua falando com o Neon via @neondatabase/
+  serverless (HTTP) com SQL cru. O Prisma e devDependency.
+
+- No Prisma 7 a connection string NAO fica mais no schema.prisma: vai no
+  prisma.config.ts, com um driver adapter. Usamos o adapter pg (TCP) porque
+  migration precisa de transacao e advisory lock, que o endpoint HTTP do Neon
+  nao oferece.
+
+- O schema.prisma NAO declara foreign keys de proposito. O push do sync envia
+  as tabelas em lotes separados, e uma FK rejeitaria uma tarefa cuja categoria
+  ainda nao subiu. A ordem correta e garantida por SYNC_TABLES.
+
+- AO MUDAR O SCHEMA, alterar em TRES lugares (o app nao usa o Prisma Client,
+  entao nada e gerado automaticamente):
+      1. prisma/schema.prisma      -> banco remoto
+      2. src/main/db/schema.ts     -> DDL do SQLite local + SYNC_COLUMNS
+      3. src/shared/types.ts       -> tipos compartilhados
