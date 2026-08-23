@@ -32,7 +32,7 @@ export function TaskGroup({
         <span className={cn(tone === 'danger' ? 'text-destructive' : 'text-muted-foreground')}>
           {icon}
         </span>
-        <h2 className={cn('text-[14px] font-semibold', tone === 'danger' && 'text-destructive')}>
+        <h2 className={cn('text-[15px] font-semibold', tone === 'danger' && 'text-destructive')}>
           {title}
         </h2>
         <span className="text-muted-foreground text-[12.5px] tabular-nums">{tasks.length}</span>

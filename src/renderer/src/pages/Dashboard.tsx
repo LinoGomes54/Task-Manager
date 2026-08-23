@@ -47,10 +47,10 @@ export function DashboardPage(): React.JSX.Element {
       {/* Faixa de saudacao: contexto do dia a esquerda, relogio a direita. */}
       <div className="bg-card mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-4">
         <div className="min-w-0">
-          <h2 className="text-[21px] font-semibold tracking-tight">
+          <h2 className="text-[24px] font-semibold tracking-tight">
             {saudacao}, {primeiroNome}
           </h2>
-          <p className="mt-0.5 text-[12px] first-letter:uppercase" style={{ color: 'var(--faint)' }}>
+          <p className="mt-1 text-[13px] first-letter:uppercase" style={{ color: 'var(--faint)' }}>
             {format(agora, "EEEE, d 'de' MMMM", { locale: ptBR })}
             {stats ? ` · ${stats.dueToday} para hoje` : ''}
             {stats && stats.overdue > 0 ? ` · ${stats.overdue} atrasadas` : ''}
@@ -58,7 +58,7 @@ export function DashboardPage(): React.JSX.Element {
         </div>
 
         <div className="text-right">
-          <p className="text-[21px] leading-none font-semibold tabular-nums">
+          <p className="text-[26px] leading-none font-semibold tabular-nums">
             {format(agora, 'HH:mm')}
           </p>
           <p className="mt-1 text-[11px]" style={{ color: 'var(--faint)' }}>
@@ -67,7 +67,7 @@ export function DashboardPage(): React.JSX.Element {
         </div>
       </div>
 
-      <div className="grid gap-4 @2xl:grid-cols-[minmax(0,1.5fr)_minmax(250px,1fr)]">
+      <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(280px,400px)]">
         <div className="min-w-0 space-y-4">
           <Panel
             title="Hoje"
@@ -142,7 +142,7 @@ export function DashboardPage(): React.JSX.Element {
                   key={item.categoryId ?? item.name}
                   type="button"
                   onClick={() => navigate(`/tarefas?categoria=${item.categoryId}`)}
-                  className="hover:bg-accent/60 -mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2.5 rounded-lg px-1 py-1 text-left transition-colors"
+                  className="hover:bg-accent/60 -mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left transition-colors"
                 >
                   <CategoryIcon
                     icon={item.icon}
@@ -150,9 +150,9 @@ export function DashboardPage(): React.JSX.Element {
                     variant="plain"
                     className="size-3.5 shrink-0"
                   />
-                  <span className="min-w-0 flex-1 truncate text-[12px]">{item.name}</span>
+                  <span className="min-w-0 shrink truncate text-[13px]">{item.name}</span>
                   <span
-                    className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full"
+                    className="h-1.5 w-full max-w-28 min-w-12 flex-1 overflow-hidden rounded-full"
                     style={{ backgroundColor: 'var(--border)' }}
                   >
                     <span
@@ -186,17 +186,17 @@ export function DashboardPage(): React.JSX.Element {
                   key={card.label}
                   type="button"
                   onClick={() => navigate(card.to)}
-                  className="hover:border-ring/40 rounded-[10px] border px-2.5 py-2 text-left transition-colors"
+                  className="hover:border-ring/40 rounded-xl border px-3.5 py-3 text-left transition-colors"
                 >
                   <p
                     className={cn(
-                      'text-[19px] leading-none font-semibold tabular-nums',
+                      'text-[22px] leading-none font-semibold tabular-nums',
                       card.alerta && card.value > 0 && 'text-destructive'
                     )}
                   >
                     {card.value}
                   </p>
-                  <p className="mt-1 text-[11px]" style={{ color: 'var(--faint)' }}>
+                  <p className="mt-1.5 text-[12px]" style={{ color: 'var(--faint)' }}>
                     {card.label}
                   </p>
                 </button>

@@ -114,7 +114,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
 
           {hasSubline && (
             <p
-              className="mt-1 flex items-center gap-1.5 truncate text-[12px]"
+              className="mt-1 flex items-center gap-1.5 truncate text-[12.5px]"
               style={{ color: 'var(--faint)' }}
             >
               {category && (
@@ -144,7 +144,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
         {/* Metadados a direita, na ordem do design: horario, prioridade, acoes. */}
         {task.dueAt && (
           <span
-            className={cn('shrink-0 font-mono text-[12px]', late && 'text-destructive')}
+            className={cn('shrink-0 font-mono text-[12.5px]', late && 'text-destructive')}
             style={late ? undefined : { color: 'var(--faint)' }}
             title={formatDueDate(task.dueAt)}
           >

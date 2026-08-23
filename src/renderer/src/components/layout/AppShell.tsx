@@ -66,7 +66,7 @@ export function AppShell(): React.JSX.Element {
             mudava nada, e uma janela de 1264px caia para uma coluna so por estar
             1px abaixo do breakpoint `xl`.
           */}
-          <div className="@container mx-auto w-full max-w-6xl p-4 sm:p-6">
+          <div className="@container mx-auto w-full max-w-[1700px] p-5 sm:p-7 2xl:p-9">
             <Outlet />
           </div>
         </div>

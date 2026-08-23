@@ -79,7 +79,7 @@ export function PlaygroundPage(): React.JSX.Element {
         }
       />
 
-      <div className="grid gap-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
+      <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(300px,440px)]">
         <Panel title="Foco" meta={emFoco ? undefined : 'sessão livre'}>
           <div className="flex flex-col items-center py-4">
             <p

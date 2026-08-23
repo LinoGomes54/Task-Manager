@@ -251,7 +251,7 @@ function NavRow({ to, label, meta, active, icon }: NavRowProps): React.JSX.Eleme
       to={to}
       title={label}
       className={cn(
-        'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-[7px] text-[13px] transition-colors',
+        'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-[13.5px] transition-colors',
         'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0',
         active
           ? 'bg-sidebar-accent nav-active font-semibold'
