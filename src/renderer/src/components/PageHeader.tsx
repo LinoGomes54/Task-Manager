@@ -1,21 +1,45 @@
 interface PageHeaderProps {
   title: string
   description?: string
+  /** Resumo numerico alinhado a direita — "11 abertas · 3 atrasadas". */
+  stats?: React.ReactNode
   action?: React.ReactNode
 }
 
-/** Cabecalho padrao das paginas — mantem o espacamento consistente entre elas. */
-export function PageHeader({ title, description, action }: PageHeaderProps): React.JSX.Element {
+/**
+ * Cabecalho no formato do design: titulo e descricao **na mesma linha**, com o
+ * resumo numerico empurrado para a direita.
+ *
+ * Empilhar titulo sobre descricao (o padrao anterior) gastava altura em toda
+ * tela; inline, a faixa fica com a mesma altura de uma barra de ferramentas e
+ * sobra espaco para o conteudo.
+ */
+export function PageHeader({
+  title,
+  description,
+  stats,
+  action
+}: PageHeaderProps): React.JSX.Element {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="text-muted-foreground mt-1 text-sm first-letter:uppercase">
-            {description}
-          </p>
-        )}
-      </div>
+    <div className="border-border/70 mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-2 border-b pb-3">
+      <h1 className="text-[15px] font-semibold tracking-tight">{title}</h1>
+
+      {description && (
+        <p
+          className="min-w-0 flex-1 truncate text-[12px] first-letter:uppercase"
+          style={{ color: 'var(--faint)' }}
+          title={description}
+        >
+          {description}
+        </p>
+      )}
+
+      {stats && (
+        <p className="shrink-0 text-[11.5px]" style={{ color: 'var(--faint)' }}>
+          {stats}
+        </p>
+      )}
+
       {action && <div className="shrink-0">{action}</div>}
     </div>
   )
