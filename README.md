@@ -73,23 +73,36 @@ O cadastro e o login acontecem **dentro do próprio app**, sem serviço externo.
   porque o hash da senha fica no cache local.
 - A sessão dura 30 dias; ao reabrir o app você cai direto no dashboard.
 
-### Sidebar retrátil
+### Sidebar retrátil e redimensionamento
 
 O botão de painel no canto superior esquerdo **recolhe e expande** a sidebar. Recolhida,
 ela vira uma barra de ícones com dica ao passar o mouse. Atalho: **Ctrl+B**. A escolha
 fica salva entre as sessões.
 
+A janela **se adapta ao tamanho**: os cards do dashboard e as categorias reorganizam as
+colunas, e o painel do calendário desce para baixo da grade quando o espaço aperta.
+
+O redimensionamento tem um **piso de 900 × 640**. Abaixo disso a grade do calendário e os
+filtros começariam a se sobrepor, então é melhor o Windows impedir de encolher do que
+entregar um layout quebrado. Recolher a sidebar devolve espaço e o conteúdo reage na hora
+— o layout observa o espaço real disponível, não o tamanho da janela.
+
 ### As telas
 
 | Tela | Para quê |
 |---|---|
-| **Dashboard** | Resumo do dia: para hoje, atrasadas, importantes e concluídas no mês, mais a lista de hoje e a distribuição por categoria. Os cards são clicáveis. |
-| **Todas as tarefas** | Lista completa com busca por título/descrição e filtros por categoria, situação e prioridade. |
+| **Dashboard** | Resumo do dia: para hoje, atrasadas, importantes e concluídas no mês, mais a lista do dia e a distribuição por categoria. Os cards são clicáveis. |
+| **Tarefas** | Lista completa com busca por título/descrição e filtros por categoria, situação e prioridade. |
+| **Tarefas de Hoje** | O que merece atenção agora, em três blocos: **atrasadas**, **para hoje** e **sem prazo**. |
 | **Importantes** | Só o que você marcou com a estrela. |
-| **Recorrentes** | Tarefas que se repetem. |
+| **Diariamente / Semanalmente / Mensalmente** | As repetições, separadas por periodicidade. |
 | **Calendário** | Grade do mês com as tarefas que têm prazo. |
-| **Categorias** | Criar, renomear, recolorir e excluir categorias. |
-| **Configurações** | Inicialização com o Windows, alarmes, tema e sincronização. |
+| **Categorias** | Criar, renomear, recolorir, trocar o ícone e excluir categorias. |
+| **Configurações** | Inicialização com o Windows, alarmes, repetições, tema e sincronização. |
+
+> **Tarefas sem prazo não somem.** Elas aparecem no bloco “Sem prazo” do dashboard
+> e da tela Tarefas de Hoje. Só não entram no calendário — que, por definição,
+> mostra o que tem data.
 
 ### Criar, editar e remover tarefas
 
@@ -109,7 +122,16 @@ Para **concluir**, marque a caixinha à esquerda. Para **favoritar**, clique na 
 ### Categorias
 
 A conta já nasce com seis categorias: **Educação, Financeiro, Cuidado Pessoal,
-Trabalho, Casa e Lazer**. Você pode renomear, trocar a cor, criar novas e excluir.
+Trabalho, Casa e Lazer**. Você pode renomear, trocar a cor, escolher o **ícone**,
+criar novas e excluir.
+
+O seletor de ícone traz ~80 opções agrupadas por tema (educação, financeiro, saúde,
+casa, trabalho, lazer, viagem…) e tem **busca em português** — digite “academia”,
+“dinheiro” ou “remédio” e ele encontra, sem você precisar saber o nome em inglês.
+A prévia no topo do formulário mostra na hora como a categoria vai aparecer nas listas.
+
+O ícone escolhido aparece na tela de Categorias, no seletor do formulário de tarefa,
+na etiqueta de cada tarefa e no resumo por categoria do dashboard.
 
 Excluir uma categoria **não apaga as tarefas dela** — elas apenas ficam sem categoria.
 
@@ -120,6 +142,18 @@ com o prazo avançado pela regra escolhida. A tarefa concluída permanece no his
 
 Se o prazo original já passou há várias repetições, o app pula direto para a próxima
 data futura, em vez de criar uma pilha de tarefas atrasadas.
+
+**Só dá para concluir a repetição do dia dela.** A ocorrência de amanhã aparece com a
+caixa desabilitada e uma explicação ao passar o mouse — sem isso, marcar a de amanhã
+geraria a de depois de amanhã, e a fila andaria para frente sem o trabalho ter sido feito.
+
+Duas coisas continuam liberadas de propósito:
+
+- **Tarefas atrasadas** — a diária de ontem que você esqueceu de marcar. Se travasse,
+  ela ficaria impossível de concluir para sempre.
+- **Reabrir uma tarefa concluída** — desmarcar nunca é bloqueado.
+
+Para desligar, vá em **Configurações → Tarefas recorrentes**. A trava vem ligada.
 
 ### Calendário e tarefas do mês
 

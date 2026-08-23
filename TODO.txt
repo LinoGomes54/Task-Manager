@@ -1,6 +1,6 @@
 TASK MANAGER - PENDENCIAS E ANOTACOES
 =====================================
-Ultima atualizacao: 03/08/2026
+Ultima atualizacao: 23/08/2026
 
 
 -------------------------------------------------------------------------------
@@ -104,6 +104,21 @@ Feitos rodando o app de verdade (Electron + Playwright), nao apenas build:
 [x] App EMPACOTADO abre e cria o banco local corretamente
 [x] Icone da bandeja incluido nos resources do pacote
 
+--- alteracoes de 23/08/2026 ---
+[x] Migracao local ALTER TABLE roda em banco pre-existente sem quebrar
+[x] Dashboard passa a mostrar tarefas SEM PRAZO (bug: due_at >= from descarta NULL)
+[x] Dashboard e Tarefas de Hoje agrupam atrasadas / hoje / sem prazo
+[x] Lista atualiza sozinha ao criar tarefa, sem reload
+[x] Sidebar reorganizada: Tarefas, Tarefas de Hoje + grupo Repeticoes
+[x] Abas Diariamente / Semanalmente / Mensalmente filtram por recorrencia
+[x] Calendario com altura CONSTANTE (medido: 385px em 3 meses seguidos)
+[x] Responsividade sem overflow horizontal de 900x640 ate 1600x900
+[x] Container queries: layout reage ao espaco real, nao a largura da janela
+[x] Trava de repeticao futura: a de amanha nasce desabilitada
+[x] Reabrir tarefa concluida continua permitido com a trava ligada
+[x] Desligar a trava em Configuracoes destrava na hora
+[x] Icones nas categorias, com seletor e busca em pt-BR
+
 --- apos a migracao para o Prisma (09/08/2026) ---
 [x] Prisma Migrate cria as 4 tabelas + _prisma_migrations no Neon
 [x] SQL gerado pela migration bate com o schema anterior (conferido linha a linha)
@@ -199,6 +214,20 @@ instalar o app de fato:
 - O schema.prisma NAO declara foreign keys de proposito. O push do sync envia
   as tabelas em lotes separados, e uma FK rejeitaria uma tarefa cuja categoria
   ainda nao subiu. A ordem correta e garantida por SYNC_TABLES.
+
+- A TRAVA DE REPETICAO FUTURA vive em src/shared/task-rules.ts, e nao em um dos
+  processos: o main usa para RECUSAR a operacao e o renderer para DESABILITAR o
+  checkbox. Se a regra morasse so num lado, a interface ofereceria uma acao que
+  o backend nega.
+
+- OS ICONES DE CATEGORIA sao uma lista curada em src/renderer/src/lib/
+  category-icons.ts, e nao o lucide inteiro (1500+): mantem o bundle enxuto e a
+  lista navegavel. As CHAVES sao gravadas no banco - nao renomeie uma chave
+  existente sem migrar os dados; adicionar novas e sempre seguro.
+
+- O LAYOUT usa CONTAINER QUERIES (@container no AppShell) em vez de breakpoints
+  de janela. Motivo: recolher a sidebar devolve ~200px de espaco, e com media
+  query normal o conteudo nao reagia a isso.
 
 - AO MUDAR O SCHEMA, alterar em TRES lugares (o app nao usa o Prisma Client,
   entao nada e gerado automaticamente):
