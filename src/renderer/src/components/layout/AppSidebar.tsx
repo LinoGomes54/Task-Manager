@@ -101,7 +101,7 @@ export function AppSidebar(): React.JSX.Element {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Tarefas</SidebarGroupLabel>
+          <SidebarGroupLabel className="section-label">Tarefas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.map((item) => (
@@ -117,10 +117,10 @@ export function AppSidebar(): React.JSX.Element {
                     </NavLink>
                   </SidebarMenuButton>
                   {item.badge === 'important' && stats && stats.importantPending > 0 && (
-                    <SidebarMenuBadge>{stats.importantPending}</SidebarMenuBadge>
+                    <SidebarMenuBadge className="font-mono">{stats.importantPending}</SidebarMenuBadge>
                   )}
                   {item.badge === 'today' && stats && stats.dueToday > 0 && (
-                    <SidebarMenuBadge>{stats.dueToday}</SidebarMenuBadge>
+                    <SidebarMenuBadge className="font-mono">{stats.dueToday}</SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
               ))}
@@ -129,7 +129,7 @@ export function AppSidebar(): React.JSX.Element {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Repetições</SidebarGroupLabel>
+          <SidebarGroupLabel className="section-label">Repetições</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {RECURRENCE_ITEMS.map((item) => (
@@ -147,7 +147,7 @@ export function AppSidebar(): React.JSX.Element {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Gerenciar</SidebarGroupLabel>
+          <SidebarGroupLabel className="section-label">Gerenciar</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {MANAGE_ITEMS.map((item) => (

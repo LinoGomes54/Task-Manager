@@ -52,7 +52,7 @@ export function TasksPage(): React.JSX.Element {
   return (
     <>
       <PageHeader
-        title="Todas as tarefas"
+        title="Tarefas"
         description="Busque, filtre e organize tudo que você anotou."
         action={
           <Button onClick={() => openNew()} className="gap-1.5">
@@ -76,7 +76,7 @@ export function TasksPage(): React.JSX.Element {
         </div>
 
         <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className="w-44 shrink-0">
+          <SelectTrigger className="w-48 shrink-0">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -90,7 +90,7 @@ export function TasksPage(): React.JSX.Element {
         </Select>
 
         <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)}>
-          <SelectTrigger className="w-40 shrink-0">
+          <SelectTrigger className="w-48 shrink-0">
             <SelectValue placeholder="Situação" />
           </SelectTrigger>
           <SelectContent>
@@ -104,7 +104,7 @@ export function TasksPage(): React.JSX.Element {
         </Select>
 
         <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)}>
-          <SelectTrigger className="w-36 shrink-0">
+          <SelectTrigger className="w-40 shrink-0">
             <SelectValue placeholder="Prioridade" />
           </SelectTrigger>
           <SelectContent>

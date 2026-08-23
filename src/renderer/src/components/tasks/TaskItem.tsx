@@ -51,11 +51,13 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
 
   return (
     <>
+      {/* Padding vertical vem da densidade escolhida em Configuracoes. */}
       <div
         className={cn(
-          'group hover:bg-accent/50 flex items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors',
+          'group bg-card hover:border-ring/40 flex items-start gap-2.5 rounded-[10px] border px-[11px] transition-colors',
           done && 'opacity-60'
         )}
+        style={{ paddingBlock: 'var(--row-padding)' }}
       >
         {locked ? (
           <Tooltip>
