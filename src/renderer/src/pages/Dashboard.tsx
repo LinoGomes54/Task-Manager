@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import { CalendarCheck, AlertTriangle, CheckCheck, Star, ListTodo, Inbox } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/PageHeader'
-import { TaskList } from '@/components/tasks/TaskList'
-import { useStats, useTasks } from '@/hooks/use-tasks'
+import { TaskGroup } from '@/components/tasks/TaskGroup'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
+import { useStats, useTodayTasks } from '@/hooks/use-tasks'
 import { useAuthStore } from '@/stores/auth.store'
 import { cn } from '@/lib/utils'
 
@@ -15,16 +17,7 @@ export function DashboardPage(): React.JSX.Element {
   const user = useAuthStore((state) => state.session?.user)
   const { data: stats, isLoading: loadingStats } = useStats()
 
-  const today = new Date()
-  const start = new Date(today)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(today)
-  end.setHours(23, 59, 59, 999)
-
-  const { data: todayTasks, isLoading } = useTasks({
-    from: start.toISOString(),
-    to: end.toISOString()
-  })
+  const { today, overdue, noDueDate, total, isLoading } = useTodayTasks()
 
   const cards = [
     {
@@ -32,14 +25,14 @@ export function DashboardPage(): React.JSX.Element {
       value: stats?.dueToday ?? 0,
       icon: CalendarCheck,
       tone: 'text-sky-500',
-      to: '/calendario'
+      to: '/hoje'
     },
     {
       label: 'Atrasadas',
       value: stats?.overdue ?? 0,
       icon: AlertTriangle,
       tone: 'text-destructive',
-      to: '/tarefas'
+      to: '/hoje'
     },
     {
       label: 'Importantes',
@@ -70,7 +63,7 @@ export function DashboardPage(): React.JSX.Element {
         })}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
         {cards.map((card) => (
           <Card
             key={card.label}
@@ -97,22 +90,58 @@ export function DashboardPage(): React.JSX.Element {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <section>
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <ListTodo className="size-4" />
-            Tarefas de hoje
-          </h2>
-          <TaskList
-            tasks={todayTasks}
-            loading={isLoading}
-            empty={{
-              icon: <Inbox className="size-8" />,
-              title: 'Nada marcado para hoje',
-              description:
-                'Crie uma tarefa com prazo para hoje e ela aparece aqui — junto com o alarme, se você definir um lembrete.'
-            }}
-          />
+      <div className="mt-6 grid gap-6 @2xl:grid-cols-[minmax(0,1.6fr)_minmax(240px,1fr)]">
+        <section className="min-w-0">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <ListTodo className="size-4" />
+              Tarefas de hoje
+            </h2>
+            {total > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => navigate('/hoje')}>
+                Ver todas
+              </Button>
+            )}
+          </div>
+
+          {isLoading && (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-[68px] w-full rounded-lg" />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && total === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-14 text-center">
+              <Inbox className="text-muted-foreground mb-3 size-8" />
+              <p className="text-sm font-medium">Tudo em dia por aqui</p>
+              <p className="text-muted-foreground mt-1 max-w-sm text-xs">
+                Nada atrasado, nada marcado para hoje e nenhuma tarefa solta esperando prazo.
+              </p>
+            </div>
+          )}
+
+          {!isLoading && total > 0 && (
+            <div className="space-y-5">
+              <TaskGroup
+                title="Atrasadas"
+                tasks={overdue}
+                tone="danger"
+                icon={<AlertTriangle className="size-4" />}
+              />
+              <TaskGroup
+                title="Para hoje"
+                tasks={today}
+                icon={<CalendarCheck className="size-4" />}
+              />
+              <TaskGroup
+                title="Sem prazo"
+                tasks={noDueDate}
+                icon={<Inbox className="size-4" />}
+              />
+            </div>
+          )}
         </section>
 
         <section>
@@ -129,13 +158,15 @@ export function DashboardPage(): React.JSX.Element {
 
               {stats?.byCategory.map((item) => (
                 <div key={item.categoryId ?? item.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="size-2.5 rounded-full"
-                        style={{ backgroundColor: item.color }}
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <CategoryIcon
+                        icon={item.icon}
+                        color={item.color}
+                        variant="plain"
+                        className="size-3.5"
                       />
-                      {item.name}
+                      <span className="truncate">{item.name}</span>
                     </span>
                     <span className="text-muted-foreground tabular-nums">{item.count}</span>
                   </div>

@@ -27,6 +27,7 @@ import {
 import { useTaskDialog } from '@/stores/task-dialog.store'
 import { useCategories } from '@/hooks/use-categories'
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import {
   PRIORITY_LABELS,
   RECURRENCE_LABELS,
@@ -103,12 +104,18 @@ export function TaskDialog(): React.JSX.Element {
       return
     }
 
+    // Repeticao precisa de prazo para o agendamento da proxima ocorrencia fazer
+    // sentido, entao ao abrir ja com uma regra sugerida marcamos hoje por padrao.
+    const suggestedRecurrence = defaults?.recurrence ?? 'none'
+    const needsDueDate = Boolean(defaults?.dueAt) || suggestedRecurrence !== 'none'
+
     setForm({
       ...EMPTY,
       categoryId: defaults?.categoryId ?? NO_CATEGORY,
       isImportant: defaults?.isImportant ?? false,
-      hasDueDate: Boolean(defaults?.dueAt),
-      dueDate: defaults?.dueAt ? parseISO(defaults.dueAt) : undefined,
+      recurrence: suggestedRecurrence,
+      hasDueDate: needsDueDate,
+      dueDate: defaults?.dueAt ? parseISO(defaults.dueAt) : needsDueDate ? new Date() : undefined,
       dueTime: defaults?.dueAt ? extractTime(defaults.dueAt) : '09:00'
     })
   }, [open, editing, defaults])
@@ -198,9 +205,11 @@ export function TaskDialog(): React.JSX.Element {
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <span className="flex items-center gap-2">
-                          <span
-                            className="size-2.5 rounded-full"
-                            style={{ backgroundColor: category.color }}
+                          <CategoryIcon
+                            icon={category.icon}
+                            color={category.color}
+                            variant="plain"
+                            className="size-3.5"
                           />
                           {category.name}
                         </span>

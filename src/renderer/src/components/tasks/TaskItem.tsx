@@ -23,6 +23,10 @@ import {
 import { useRemoveTask, useToggleComplete, useToggleImportant } from '@/hooks/use-tasks'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 import { useCategoryMap } from '@/hooks/use-categories'
+import { useSettings } from '@/hooks/use-settings'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { isFutureRecurrence, FUTURE_RECURRENCE_MESSAGE } from '@shared/task-rules'
 import { PRIORITY_LABELS, RECURRENCE_LABELS, formatDueDate, isOverdue } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Task } from '@shared/types'
@@ -31,6 +35,7 @@ import type { Task } from '@shared/types'
 export function TaskItem({ task }: { task: Task }): React.JSX.Element {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const categories = useCategoryMap()
+  const { data: settings } = useSettings()
   const openEdit = useTaskDialog((store) => store.openEdit)
   const toggleComplete = useToggleComplete()
   const toggleImportant = useToggleImportant()
@@ -40,6 +45,10 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
   const done = task.status === 'done'
   const late = isOverdue(task.dueAt, task.status)
 
+  // Repeticao futura fica travada: quem manda e a mesma regra que o processo
+  // principal aplica, importada de `shared/` para os dois lados nao divergirem.
+  const locked = isFutureRecurrence(task, settings?.lockFutureRecurring ?? true)
+
   return (
     <>
       <div
@@ -48,12 +57,27 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
           done && 'opacity-60'
         )}
       >
-        <Checkbox
-          checked={done}
-          onCheckedChange={() => toggleComplete.mutate(task.id)}
-          className="mt-0.5"
-          aria-label={done ? 'Reabrir tarefa' : 'Concluir tarefa'}
-        />
+        {locked ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* O span existe porque um controle desabilitado nao dispara os
+                  eventos de mouse que o tooltip precisa para abrir. */}
+              <span className="mt-0.5 flex cursor-not-allowed">
+                <Checkbox checked={false} disabled aria-label="Repetição ainda não disponível" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-64">
+              {FUTURE_RECURRENCE_MESSAGE}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Checkbox
+            checked={done}
+            onCheckedChange={() => toggleComplete.mutate(task.id)}
+            className="mt-0.5"
+            aria-label={done ? 'Reabrir tarefa' : 'Concluir tarefa'}
+          />
+        )}
 
         <button
           type="button"
@@ -71,9 +95,11 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {category && (
               <Badge variant="outline" className="gap-1 text-[11px] font-normal">
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: category.color }}
+                <CategoryIcon
+                  icon={category.icon}
+                  color={category.color}
+                  variant="plain"
+                  className="size-3"
                 />
                 {category.name}
               </Badge>

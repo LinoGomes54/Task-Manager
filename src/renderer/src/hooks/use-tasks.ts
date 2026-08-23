@@ -25,6 +25,44 @@ export function useStats() {
   })
 }
 
+/**
+ * Os tres grupos que compoem a visao do dia.
+ *
+ * Sao consultas separadas de proposito: uma condicao unica nao consegue juntar
+ * `due_at BETWEEN ...` com `due_at IS NULL`, porque qualquer comparacao com NULL
+ * no SQL descarta a linha — era exatamente por isso que tarefas sem prazo nao
+ * apareciam em lugar nenhum. Como o banco e local, as tres consultas custam
+ * praticamente nada.
+ */
+export function useTodayTasks(): {
+  today: Task[]
+  overdue: Task[]
+  noDueDate: Task[]
+  total: number
+  isLoading: boolean
+} {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  const end = new Date()
+  end.setHours(23, 59, 59, 999)
+
+  const todayQuery = useTasks({ from: start.toISOString(), to: end.toISOString() })
+  const overdueQuery = useTasks({ dueScope: 'overdue' })
+  const noDueQuery = useTasks({ dueScope: 'no_due', status: 'pending' })
+
+  const today = todayQuery.data ?? []
+  const overdue = overdueQuery.data ?? []
+  const noDueDate = noDueQuery.data ?? []
+
+  return {
+    today,
+    overdue,
+    noDueDate,
+    total: today.length + overdue.length + noDueDate.length,
+    isLoading: todayQuery.isLoading || overdueQuery.isLoading || noDueQuery.isLoading
+  }
+}
+
 function useInvalidateTasks(): () => void {
   const client = useQueryClient()
   return () => {
