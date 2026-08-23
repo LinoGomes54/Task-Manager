@@ -12,7 +12,9 @@ function Progress({
     <ProgressPrimitive.Root
       data-slot="progress"
       className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-primary/20",
+        // Trilho neutro, nao `bg-primary/20`: com valor 0 a barra colorida de
+        // fundo parecia preenchida, sugerindo tarefas onde nao havia nenhuma.
+        "relative h-2 w-full overflow-hidden rounded-full bg-border",
         className
       )}
       {...props}

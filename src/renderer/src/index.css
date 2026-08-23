@@ -3,6 +3,59 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ------------------------------------------------------------------ */
+/* Fontes                                                              */
+/*                                                                     */
+/* Embutidas no pacote, e nao carregadas do Google Fonts: o app e       */
+/* offline-first e a CSP do renderer bloqueia rede externa — uma fonte  */
+/* de CDN simplesmente nao apareceria sem internet.                    */
+/* Sao fontes variaveis: um arquivo cobre todos os pesos.              */
+/* ------------------------------------------------------------------ */
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/instrument-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/instrument-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF,
+    U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('./assets/fonts/jetbrains-mono-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF,
+    U+FFFD;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,77 +93,131 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
+/* ------------------------------------------------------------------ */
+/* Paleta                                                              */
+/*                                                                     */
+/* Vinda do design (new-design/Tarefas.dc.html). O tom de fundo e um    */
+/* bege quente (#f6f5f2) e nao um cinza neutro — e o que da o carater   */
+/* do design, entao os cinzas derivados tambem puxam para o quente.     */
+/*                                                                     */
+/* `--accent-base` e sobrescrito em runtime pela cor escolhida pelo     */
+/* usuario em Configuracoes; todo o resto deriva dela.                 */
+/* ------------------------------------------------------------------ */
+
 :root {
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 0.625rem; /* 10px — o raio das linhas e cards do design */
+
+  --accent-base: #5b5bd6;
+
+  --background: #f6f5f2;
+  --foreground: #171614;
+  --card: #ffffff;
+  --card-foreground: #171614;
+  --popover: #ffffff;
+  --popover-foreground: #171614;
+
+  --primary: var(--accent-base);
+  --primary-foreground: #ffffff;
+
+  --secondary: #fbfaf8;
+  --secondary-foreground: #171614;
+  --muted: #fbfaf8;
+  --muted-foreground: rgb(23 22 20 / 0.62);
+
+  --accent: color-mix(in srgb, var(--accent-base) 10%, transparent);
+  --accent-foreground: #171614;
+
+  --destructive: #d1495b;
+  --destructive-foreground: #ffffff;
+
+  --border: rgb(23 22 20 / 0.1);
+  --input: rgb(23 22 20 / 0.12);
+  --ring: var(--accent-base);
+
+  /* Texto terciario do design (--ink3): rotulos, contadores, dicas. */
+  --faint: rgb(23 22 20 / 0.4);
+  /* Borda mais sutil (--line2): separadores internos. */
+  --border-soft: rgb(23 22 20 / 0.06);
+
+  --chart-1: var(--accent-base);
+  --chart-2: #0ea5e9;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #ec4899;
+
+  --sidebar: #fbfaf8;
+  --sidebar-foreground: #171614;
+  --sidebar-primary: var(--accent-base);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in srgb, var(--accent-base) 10%, transparent);
+  --sidebar-accent-foreground: #171614;
+  --sidebar-border: rgb(23 22 20 / 0.1);
+  --sidebar-ring: var(--accent-base);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: #131316;
+  --foreground: #f2f1ef;
+  --card: #1b1b1f;
+  --card-foreground: #f2f1ef;
+  --popover: #1b1b1f;
+  --popover-foreground: #f2f1ef;
+
+  --primary: var(--accent-base);
+  --primary-foreground: #ffffff;
+
+  --secondary: #202025;
+  --secondary-foreground: #f2f1ef;
+  --muted: #202025;
+  --muted-foreground: rgb(242 241 239 / 0.64);
+
+  /* No escuro o design troca o realce colorido por um branco translucido,
+     que nao briga com o fundo escuro. */
+  --accent: rgb(255 255 255 / 0.07);
+  --accent-foreground: #f2f1ef;
+
+  --destructive: #e05a6b;
+  --destructive-foreground: #ffffff;
+
+  --border: rgb(255 255 255 / 0.12);
+  --input: rgb(255 255 255 / 0.15);
+  --ring: var(--accent-base);
+
+  --faint: rgb(242 241 239 / 0.4);
+  --border-soft: rgb(255 255 255 / 0.06);
+
+  --sidebar: #202025;
+  --sidebar-foreground: #f2f1ef;
+  --sidebar-primary: var(--accent-base);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(255 255 255 / 0.07);
+  --sidebar-accent-foreground: #f2f1ef;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-ring: var(--accent-base);
+}
+
+/* ------------------------------------------------------------------ */
+/* Densidade                                                           */
+/*                                                                     */
+/* O design troca altura de linha, espacamento e tamanho de fonte em    */
+/* conjunto. Sao variaveis para a troca ser instantanea, sem recarregar.*/
+/* ------------------------------------------------------------------ */
+
+:root,
+[data-density='compacto'] {
+  --row-padding: 0.5rem; /* 8px */
+  --stack-gap: 0.875rem; /* 14px */
+  --text-base-size: 0.84375rem; /* 13.5px */
+}
+
+[data-density='espacoso'] {
+  --row-padding: 0.8125rem; /* 13px */
+  --stack-gap: 1.25rem; /* 20px */
+  --text-base-size: 0.90625rem; /* 14.5px */
 }
 
 @layer base {
@@ -120,6 +227,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-size: var(--text-base-size);
     /* App desktop: nada de selecionar texto da interface por acidente. */
     user-select: none;
     overflow: hidden;
@@ -131,7 +240,23 @@
     user-select: text;
   }
 
-  /* Barra de rolagem discreta, combinando com o tema. */
+  /*
+    Monospace so onde o design usa: contadores, badges e horarios — aplicado
+    com a classe `font-mono` no proprio elemento.
+
+    `zero 0` desliga o zero cortado do JetBrains Mono. Ele ajuda a distinguir
+    0 de O em codigo, mas num contador de tarefas so parece defeito de fonte.
+  */
+  .font-mono {
+    font-family: var(--font-mono);
+    font-feature-settings: 'tnum', 'zero' 0;
+  }
+
+  /* Numeros alinhados continuam na fonte da interface. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -146,6 +271,21 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/40;
+    background: var(--faint);
+  }
+}
+
+@layer components {
+  /* Rotulo de secao: 10.5px, caixa alta, bem espacado — vem do design. */
+  .section-label {
+    font-size: 0.65625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* Item de navegacao ativo: fundo suave + barra vertical de 2px. */
+  .nav-active {
+    box-shadow: inset 2px 0 0 var(--accent-base);
   }
 }
