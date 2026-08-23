@@ -12,6 +12,7 @@ function mapSettings(row: Row): AppSettings {
     notificationsEnabled: toBool(row.notifications_enabled),
     soundEnabled: toBool(row.sound_enabled),
     reminderLeadMinutes: Number(row.reminder_lead_minutes),
+    lockFutureRecurring: toBool(row.lock_future_recurring),
     theme: String(row.theme) as ThemePreference,
     updatedAt: String(row.updated_at)
   }
@@ -42,6 +43,7 @@ const EDITABLE = {
   notificationsEnabled: 'notifications_enabled',
   soundEnabled: 'sound_enabled',
   reminderLeadMinutes: 'reminder_lead_minutes',
+  lockFutureRecurring: 'lock_future_recurring',
   theme: 'theme'
 } as const
 
