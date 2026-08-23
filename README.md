@@ -73,6 +73,16 @@ O cadastro e o login acontecem **dentro do próprio app**, sem serviço externo.
   porque o hash da senha fica no cache local.
 - A sessão dura 30 dias; ao reabrir o app você cai direto no dashboard.
 
+### Aparência
+
+Em **Configurações → Aparência** você ajusta três coisas:
+
+- **Tema** — claro, escuro ou acompanhando o Windows
+- **Densidade** — *Compacto* (linhas de 8px, texto 13,5px) ou *Espaçoso* (13px e 14,5px). Muda altura das linhas e tamanho do texto de uma vez
+- **Cor de destaque** — nove opções. Ela vale para botões, item ativo do menu, seleção e foco
+
+As três sincronizam entre máquinas, porque ficam nas configurações do usuário.
+
 ### Sidebar retrátil e redimensionamento
 
 O botão de painel no canto superior esquerdo **recolhe e expande** a sidebar. Recolhida,
@@ -208,6 +218,7 @@ sem abrir a janela, mas já vigiando seus prazos.
 | Shell desktop | **Electron 43** | Foi o pedido, e é o que dá acesso nativo ao que o app precisa no Windows: `setLoginItemSettings` (autostart), `Tray` (bandeja) e `Notification` (toast nativo). Uma PWA não alcança nada disso. |
 | Build | **electron-vite 5** | Gerencia as três entradas (main, preload, renderer) numa config só, com HMR na interface e rebuild automático do processo principal. Sem ele seria preciso orquestrar dois builds à mão. |
 | UI | **React 19 + TypeScript** | Foi o pedido. O TypeScript aqui paga especialmente: os tipos em `src/shared/` são compartilhados entre processo principal e interface, então uma mudança no formato de `Task` quebra o build dos dois lados na hora. |
+| Identidade visual | **Design próprio** (`new-design/`) | Paleta, tipografia e padrões de componente vieram do design feito no Claude Design. O fundo é um bege quente (`#f6f5f2`), não um cinza neutro — é o que dá o caráter da interface. As fontes **Instrument Sans** e **JetBrains Mono** são **embutidas no pacote**, não carregadas do Google Fonts: o app é offline-first e a CSP bloqueia rede externa, então uma fonte de CDN não apareceria sem internet. |
 | Estilo e componentes | **Tailwind v4 + shadcn/ui** | Foi o pedido. O bloco oficial **`sidebar`** do shadcn já entrega exatamente a sidebar retrátil pedida — modo ícone, atalho Ctrl+B e persistência do estado — em vez de eu reimplementar isso. Como o shadcn copia o código para o projeto, cada componente pode ser ajustado sem lutar contra a biblioteca. |
 | Roteamento | **react-router-dom (HashRouter)** | `HashRouter` e não `BrowserRouter`: no app empacotado a interface é servida por `file://`, onde rotas com caminho real quebram ao recarregar. |
 | Dados na interface | **TanStack Query** | Num app com sincronização em background, os dados mudam **fora** do fluxo do React — um pull do Neon pode trazer tarefas criadas em outra máquina. O React Query resolve isso com invalidação de cache: o processo principal avisa que algo mudou e todas as telas se atualizam sozinhas. |

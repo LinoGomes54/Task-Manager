@@ -1,6 +1,6 @@
 TASK MANAGER - PENDENCIAS E ANOTACOES
 =====================================
-Ultima atualizacao: 23/08/2026
+Ultima atualizacao: 23/08/2026 (design aplicado)
 
 
 -------------------------------------------------------------------------------
@@ -103,6 +103,17 @@ Feitos rodando o app de verdade (Electron + Playwright), nao apenas build:
 [x] Empacotamento NSIS gera o instalador (dist/Task Manager Setup 1.0.0.exe)
 [x] App EMPACOTADO abre e cria o banco local corretamente
 [x] Icone da bandeja incluido nos resources do pacote
+
+--- design aplicado (23/08/2026) ---
+[x] Paleta do design aplicada nos tokens (claro e escuro)
+[x] Fontes Instrument Sans + JetBrains Mono embutidas (88 KB, 4 arquivos)
+[x] Fontes carregam offline (4 faces confirmadas em runtime)
+[x] Corpo do texto em 13,5px e fundo #f6f5f2, batendo com o design
+[x] Item ativo do menu com barra vertical de 2px, como no design
+[x] Densidade compacto/espacoso funcionando e persistida
+[x] Cor de destaque configuravel, refletindo na hora em toda a interface
+[x] Zero cortado do JetBrains Mono desligado (parecia defeito nos contadores)
+[x] Trilho da barra de progresso neutro (com 0 parecia preenchido)
 
 --- alteracoes de 23/08/2026 ---
 [x] Migracao local ALTER TABLE roda em banco pre-existente sem quebrar
@@ -224,6 +235,15 @@ instalar o app de fato:
   category-icons.ts, e nao o lucide inteiro (1500+): mantem o bundle enxuto e a
   lista navegavel. As CHAVES sao gravadas no banco - nao renomeie uma chave
   existente sem migrar os dados; adicionar novas e sempre seguro.
+
+- AS FONTES sao EMBUTIDAS (src/renderer/src/assets/fonts), nao vem do Google
+  Fonts. Motivo: o app e offline-first e a CSP do renderer bloqueia rede
+  externa - fonte de CDN nao carregaria sem internet. Sao fontes variaveis:
+  um arquivo por subset cobre todos os pesos.
+
+- A COR DE DESTAQUE e uma variavel CSS (--accent-base) sobrescrita em runtime.
+  Todo o resto da paleta de destaque deriva dela com color-mix, entao trocar a
+  cor nao exige recarregar nem tocar em componente nenhum.
 
 - O LAYOUT usa CONTAINER QUERIES (@container no AppShell) em vez de breakpoints
   de janela. Motivo: recolher a sidebar devolve ~200px de espaco, e com media
