@@ -71,6 +71,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
   reminder_lead_minutes INTEGER NOT NULL DEFAULT 15,
   lock_future_recurring INTEGER NOT NULL DEFAULT 1,
   theme                 TEXT NOT NULL DEFAULT 'system',
+  density               TEXT NOT NULL DEFAULT 'compacto',
+  accent_color          TEXT NOT NULL DEFAULT '#5b5bd6',
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   deleted_at            TEXT,
@@ -146,6 +148,8 @@ export const SYNC_COLUMNS: Record<SyncTable, string[]> = {
     'reminder_lead_minutes',
     'lock_future_recurring',
     'theme',
+    'density',
+    'accent_color',
     'created_at',
     'updated_at',
     'deleted_at'

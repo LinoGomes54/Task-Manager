@@ -1,5 +1,5 @@
 import { queryOne, execute, now, toBool } from '../db/local'
-import type { AppSettings, ThemePreference } from '@shared/types'
+import type { AppSettings, DensityPreference, ThemePreference } from '@shared/types'
 
 type Row = Record<string, unknown>
 
@@ -14,6 +14,8 @@ function mapSettings(row: Row): AppSettings {
     reminderLeadMinutes: Number(row.reminder_lead_minutes),
     lockFutureRecurring: toBool(row.lock_future_recurring),
     theme: String(row.theme) as ThemePreference,
+    density: String(row.density) as DensityPreference,
+    accentColor: String(row.accent_color),
     updatedAt: String(row.updated_at)
   }
 }
@@ -44,7 +46,9 @@ const EDITABLE = {
   soundEnabled: 'sound_enabled',
   reminderLeadMinutes: 'reminder_lead_minutes',
   lockFutureRecurring: 'lock_future_recurring',
-  theme: 'theme'
+  theme: 'theme',
+  density: 'density',
+  accentColor: 'accent_color'
 } as const
 
 export function updateSettings(userId: string, patch: Partial<AppSettings>): AppSettings {

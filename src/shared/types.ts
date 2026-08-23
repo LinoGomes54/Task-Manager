@@ -7,6 +7,7 @@ export type TaskPriority = 'low' | 'medium' | 'high'
 export type TaskStatus = 'pending' | 'in_progress' | 'done'
 export type RecurrenceRule = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
 export type ThemePreference = 'light' | 'dark' | 'system'
+export type DensityPreference = 'compacto' | 'espacoso'
 
 export interface User {
   id: string
@@ -60,6 +61,10 @@ export interface AppSettings {
    */
   lockFutureRecurring: boolean
   theme: ThemePreference
+  /** Altura das linhas e tamanho do texto — vem do design. */
+  density: DensityPreference
+  /** Cor de destaque em hex. Tudo o mais na paleta deriva dela. */
+  accentColor: string
   updatedAt: string
 }
 

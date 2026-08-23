@@ -43,6 +43,12 @@ const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition
     table: 'user_settings',
     column: 'lock_future_recurring',
     definition: 'INTEGER NOT NULL DEFAULT 1'
+  },
+  { table: 'user_settings', column: 'density', definition: "TEXT NOT NULL DEFAULT 'compacto'" },
+  {
+    table: 'user_settings',
+    column: 'accent_color',
+    definition: "TEXT NOT NULL DEFAULT '#5b5bd6'"
   }
 ]
 
