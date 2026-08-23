@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import {
   startOfMonth,
-  endOfMonth,
   startOfWeek,
-  endOfWeek,
+  endOfDay,
   eachDayOfInterval,
   isSameMonth,
   isSameDay,
   isToday,
   addMonths,
+  addDays,
   format,
   parseISO
 } from 'date-fns'
@@ -27,6 +27,12 @@ import type { Task } from '@shared/types'
 
 const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 
+/** Marcadores visíveis por dia — o resto vira "+N". */
+const MAX_DOTS = 5
+
+/** 6 semanas fixas, para o calendário ter sempre a mesma altura. */
+const GRID_DAYS = 42
+
 /**
  * Grade mensal das tarefas com prazo.
  *
@@ -40,7 +46,7 @@ export function CalendarPage(): React.JSX.Element {
   const openNew = useTaskDialog((store) => store.openNew)
 
   const gridStart = startOfWeek(startOfMonth(month), { locale: ptBR })
-  const gridEnd = endOfWeek(endOfMonth(month), { locale: ptBR })
+  const gridEnd = endOfDay(addDays(gridStart, GRID_DAYS - 1))
 
   const { data: tasks, isLoading } = useTasks({
     from: gridStart.toISOString(),
@@ -59,7 +65,10 @@ export function CalendarPage(): React.JSX.Element {
     return map
   }, [tasks])
 
-  const days = eachDayOfInterval({ start: gridStart, end: gridEnd })
+  // Sempre 42 celulas (6 semanas). Alguns meses cabem em 5 semanas e outros
+  // precisam de 6; sem fixar, o calendario mudava de altura ao trocar de mes e a
+  // pagina "pulava". Os dias extras ja saem esmaecidos por serem de fora do mes.
+  const days = eachDayOfInterval({ start: gridStart, end: addDays(gridStart, GRID_DAYS - 1) })
   const selectedKey = format(selected, 'yyyy-MM-dd')
   const selectedTasks = byDay.get(selectedKey) ?? []
 
@@ -103,8 +112,13 @@ export function CalendarPage(): React.JSX.Element {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <Card>
+      {/*
+        Largura minima propria em cada coluna para as sete colunas do mes nunca
+        ficarem estreitas demais. Quando o espaco nao da, o painel do dia desce
+        para baixo do calendario em vez de os dois se espremerem.
+      */}
+      <div className="grid gap-6 @2xl:grid-cols-[minmax(360px,1.4fr)_minmax(260px,1fr)]">
+        <Card className="self-start">
           <CardContent className="p-3">
             {/* `first-letter:uppercase` e nao `capitalize`: o date-fns devolve
                 "agosto de 2026" e o capitalize viraria "Agosto De 2026". */}
@@ -133,11 +147,12 @@ export function CalendarPage(): React.JSX.Element {
                     key={key}
                     type="button"
                     onClick={() => setSelected(day)}
-                    onDoubleClick={() =>
-                      openNew({ dueAt: combineDateTime(day, '09:00') })
-                    }
+                    onDoubleClick={() => openNew({ dueAt: combineDateTime(day, '09:00') })}
                     className={cn(
-                      'hover:bg-accent flex min-h-16 flex-col items-start gap-1 rounded-md border border-transparent p-1.5 text-left transition-colors',
+                      // Altura FIXA (h-14), nao min-h: com min-h a celula crescia
+                      // conforme o numero de tarefas e o mes inteiro esticava,
+                      // empurrando o layout e mudando de tamanho a cada navegacao.
+                      'hover:bg-accent flex h-14 flex-col items-start gap-1 overflow-hidden rounded-md border border-transparent p-1.5 text-left transition-colors',
                       outside && 'opacity-35',
                       isSelected && 'border-primary bg-accent',
                       isToday(day) && !isSelected && 'border-primary/40'
@@ -145,20 +160,21 @@ export function CalendarPage(): React.JSX.Element {
                   >
                     <span
                       className={cn(
-                        'text-xs tabular-nums',
+                        'text-xs leading-none tabular-nums',
                         isToday(day) && 'text-primary font-semibold'
                       )}
                     >
                       {format(day, 'd')}
                     </span>
 
-                    <div className="flex w-full flex-wrap gap-0.5">
-                      {dayTasks.slice(0, 4).map((task) => (
+                    {/* Uma linha so de marcadores, sem wrap: o excedente vira "+N". */}
+                    <div className="flex w-full items-center gap-0.5 overflow-hidden">
+                      {dayTasks.slice(0, MAX_DOTS).map((task) => (
                         <span
                           key={task.id}
                           title={task.title}
                           className={cn(
-                            'size-1.5 rounded-full',
+                            'size-1.5 shrink-0 rounded-full',
                             task.status === 'done' && 'opacity-40'
                           )}
                           style={{
@@ -168,9 +184,9 @@ export function CalendarPage(): React.JSX.Element {
                           }}
                         />
                       ))}
-                      {dayTasks.length > 4 && (
-                        <span className="text-muted-foreground text-[9px] leading-none">
-                          +{dayTasks.length - 4}
+                      {dayTasks.length > MAX_DOTS && (
+                        <span className="text-muted-foreground shrink-0 text-[9px] leading-none">
+                          +{dayTasks.length - MAX_DOTS}
                         </span>
                       )}
                     </div>
