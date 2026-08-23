@@ -1,26 +1,57 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
-import type { ThemePreference } from '@shared/types'
+import type { DensityPreference, ThemePreference } from '@shared/types'
 
 /**
- * Tema da interface.
+ * Aparencia da interface: tema, densidade e cor de destaque.
  *
- * A preferencia mora nas configuracoes do usuario (e portanto sincroniza entre
- * maquinas). Aqui so mantemos o valor em memoria e aplicamos a classe `.dark`
- * no `<html>`, que e o que os tokens do shadcn observam.
+ * As tres preferencias moram nas configuracoes do usuario (e portanto sincronizam
+ * entre maquinas). Aqui so mantemos os valores em memoria e refletimos no
+ * documento — `.dark` no `<html>`, `data-density` e a variavel `--accent-base`,
+ * que e de onde toda a paleta de destaque deriva.
  *
  * O `next-themes` (dependencia padrao do bloco `sonner` do shadcn) nao foi usado:
  * ele assume Next.js e um provider proprio, e a fonte da verdade aqui e o banco.
  */
 
-interface ThemeStore {
+export const DEFAULT_ACCENT = '#5b5bd6'
+
+/** Cores de destaque sugeridas — as do design, mais variacoes de matiz. */
+export const ACCENT_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '#5b5bd6', label: 'Índigo' },
+  { value: '#2a78d6', label: 'Azul' },
+  { value: '#0d9488', label: 'Verde-azulado' },
+  { value: '#16a34a', label: 'Verde' },
+  { value: '#d97706', label: 'Âmbar' },
+  { value: '#dc2626', label: 'Vermelho' },
+  { value: '#db2777', label: 'Rosa' },
+  { value: '#7c3aed', label: 'Roxo' },
+  { value: '#475569', label: 'Ardósia' }
+]
+
+interface AppearanceStore {
   theme: ThemePreference
+  density: DensityPreference
+  accentColor: string
   setTheme: (theme: ThemePreference) => void
+  setDensity: (density: DensityPreference) => void
+  setAccentColor: (color: string) => void
+  /** Aplica as tres de uma vez, ao restaurar a sessao ou salvar as configuracoes. */
+  applyAll: (values: {
+    theme: ThemePreference
+    density: DensityPreference
+    accentColor: string
+  }) => void
 }
 
-export const useThemeStore = create<ThemeStore>((set) => ({
+export const useThemeStore = create<AppearanceStore>((set) => ({
   theme: 'system',
-  setTheme: (theme) => set({ theme })
+  density: 'compacto',
+  accentColor: DEFAULT_ACCENT,
+  setTheme: (theme) => set({ theme }),
+  setDensity: (density) => set({ density }),
+  setAccentColor: (accentColor) => set({ accentColor }),
+  applyAll: ({ theme, density, accentColor }) => set({ theme, density, accentColor })
 }))
 
 function resolve(theme: ThemePreference): 'light' | 'dark' {
@@ -28,9 +59,11 @@ function resolve(theme: ThemePreference): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-/** Aplica o tema no documento e reage a mudanca do tema do Windows. */
-export function useApplyTheme(): void {
+/** Reflete a aparencia no documento e reage a mudanca do tema do Windows. */
+export function useApplyAppearance(): void {
   const theme = useThemeStore((state) => state.theme)
+  const density = useThemeStore((state) => state.density)
+  const accentColor = useThemeStore((state) => state.accentColor)
 
   useEffect(() => {
     const apply = (): void => {
@@ -43,6 +76,14 @@ export function useApplyTheme(): void {
     media.addEventListener('change', apply)
     return () => media.removeEventListener('change', apply)
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.dataset.density = density
+  }, [density])
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent-base', accentColor)
+  }, [accentColor])
 }
 
 export function useResolvedTheme(): 'light' | 'dark' {

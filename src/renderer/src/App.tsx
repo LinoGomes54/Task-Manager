@@ -16,7 +16,7 @@ import { CalendarPage } from '@/pages/CalendarPage'
 import { CategoriesPage } from '@/pages/Categories'
 import { SettingsPage } from '@/pages/Settings'
 import { useAuthStore } from '@/stores/auth.store'
-import { useApplyTheme, useThemeStore } from '@/hooks/use-theme'
+import { useApplyAppearance, useThemeStore } from '@/hooks/use-theme'
 import { useMainEvents } from '@/hooks/use-main-events'
 import { queryClient } from '@/lib/query'
 
@@ -52,9 +52,9 @@ function Protected(): React.JSX.Element {
 function Root(): React.JSX.Element {
   const setSession = useAuthStore((state) => state.setSession)
   const setLoading = useAuthStore((state) => state.setLoading)
-  const setTheme = useThemeStore((state) => state.setTheme)
+  const applyAppearance = useThemeStore((state) => state.applyAll)
 
-  useApplyTheme()
+  useApplyAppearance()
 
   // Restaura a sessao salva no processo principal antes de decidir a rota.
   useEffect(() => {
@@ -62,11 +62,11 @@ function Root(): React.JSX.Element {
       .getSession()
       .then((session) => {
         setSession(session)
-        if (session) setTheme(session.settings.theme)
+        if (session) applyAppearance(session.settings)
       })
       .catch(() => setSession(null))
       .finally(() => setLoading(false))
-  }, [setSession, setLoading, setTheme])
+  }, [setSession, setLoading, applyAppearance])
 
   return (
     <Routes>

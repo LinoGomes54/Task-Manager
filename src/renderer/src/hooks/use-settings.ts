@@ -14,7 +14,7 @@ export function useSettings() {
 
 export function useUpdateSettings() {
   const client = useQueryClient()
-  const setTheme = useThemeStore((state) => state.setTheme)
+  const applyAppearance = useThemeStore((state) => state.applyAll)
   const session = useAuthStore((state) => state.session)
   const setSession = useAuthStore((state) => state.setSession)
 
@@ -22,7 +22,7 @@ export function useUpdateSettings() {
     mutationFn: (patch: Partial<AppSettings>) => window.api.settings.update(patch),
     onSuccess: (settings) => {
       client.setQueryData(queryKeys.settings(), settings)
-      setTheme(settings.theme)
+      applyAppearance(settings)
       if (session) setSession({ ...session, settings })
       toast.success('Configurações salvas')
     },

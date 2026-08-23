@@ -19,7 +19,7 @@ import { useThemeStore } from '@/hooks/use-theme'
 export function AuthPage(): React.JSX.Element {
   const navigate = useNavigate()
   const setSession = useAuthStore((state) => state.setSession)
-  const setTheme = useThemeStore((state) => state.setTheme)
+  const applyAppearance = useThemeStore((state) => state.applyAll)
   const [submitting, setSubmitting] = useState(false)
 
   const [login, setLogin] = useState({ email: '', password: '' })
@@ -31,7 +31,7 @@ export function AuthPage(): React.JSX.Element {
     try {
       const result = await window.api.auth.login(login)
       setSession(result)
-      setTheme(result.settings.theme)
+      applyAppearance(result.settings)
       navigate('/', { replace: true })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Não foi possível entrar')
@@ -55,7 +55,7 @@ export function AuthPage(): React.JSX.Element {
         password: signup.password
       })
       setSession(result)
-      setTheme(result.settings.theme)
+      applyAppearance(result.settings)
       toast.success(`Bem-vindo, ${result.user.name.split(' ')[0]}!`)
       navigate('/', { replace: true })
     } catch (error) {

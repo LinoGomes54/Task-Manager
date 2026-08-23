@@ -16,7 +16,9 @@ import {
 import { PageHeader } from '@/components/PageHeader'
 import { useSettings, useUpdateSettings, useSyncState, useRunSync } from '@/hooks/use-settings'
 import { REMINDER_OPTIONS } from '@/lib/format'
-import type { AppSettings, ThemePreference } from '@shared/types'
+import { ACCENT_OPTIONS } from '@/hooks/use-theme'
+import { cn } from '@/lib/utils'
+import type { AppSettings, DensityPreference, ThemePreference } from '@shared/types'
 
 /** Preferencias do app: inicializacao com o Windows, alarmes, tema e sincronizacao. */
 export function SettingsPage(): React.JSX.Element {
@@ -187,7 +189,7 @@ export function SettingsPage(): React.JSX.Element {
               Aparência
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <Label>Tema</Label>
@@ -208,6 +210,59 @@ export function SettingsPage(): React.JSX.Element {
                   <SelectItem value="dark">Escuro</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <Label>Densidade</Label>
+                <p className="text-muted-foreground text-xs">
+                  Altura das linhas e tamanho do texto. “Compacto” cabe mais na tela.
+                </p>
+              </div>
+              <Select
+                value={settings.density}
+                onValueChange={(value) => patch({ density: value as DensityPreference })}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compacto">Compacto</SelectItem>
+                  <SelectItem value="espacoso">Espaçoso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2.5">
+              <div className="space-y-0.5">
+                <Label>Cor de destaque</Label>
+                <p className="text-muted-foreground text-xs">
+                  Usada em botões, item ativo do menu e seleção.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {ACCENT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    title={option.label}
+                    aria-label={`Cor ${option.label}`}
+                    aria-pressed={settings.accentColor === option.value}
+                    onClick={() => patch({ accentColor: option.value })}
+                    className={cn(
+                      'size-8 rounded-lg border-2 transition-transform',
+                      settings.accentColor === option.value
+                        ? 'border-foreground scale-110'
+                        : 'border-transparent hover:scale-105'
+                    )}
+                    style={{ backgroundColor: option.value }}
+                  />
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
