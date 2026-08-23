@@ -24,3 +24,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Arquivos de origem do design (referencia, nao entram no app)
+new-design/
