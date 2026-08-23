@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Task } from '@shared/types'
+import type { RecurrenceRule, Task } from '@shared/types'
 
 /**
  * Controla o dialogo de criar/editar tarefa.
@@ -14,7 +14,12 @@ interface TaskDialogStore {
   /** Tarefa em edicao; `null` quando e criacao. */
   editing: Task | null
   /** Valores iniciais ao criar (ex.: o dia clicado no calendario). */
-  defaults: { dueAt?: string; categoryId?: string; isImportant?: boolean } | null
+  defaults: {
+    dueAt?: string
+    categoryId?: string
+    isImportant?: boolean
+    recurrence?: RecurrenceRule
+  } | null
   openNew: (defaults?: TaskDialogStore['defaults']) => void
   openEdit: (task: Task) => void
   close: () => void

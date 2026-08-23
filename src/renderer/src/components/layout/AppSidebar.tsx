@@ -3,7 +3,10 @@ import {
   LayoutDashboard,
   ListChecks,
   Star,
+  Sun,
   Repeat,
+  CalendarRange,
+  CalendarClock,
   CalendarDays,
   Tags,
   Settings,
@@ -40,10 +43,17 @@ import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/tarefas', label: 'Todas as tarefas', icon: ListChecks },
+  { to: '/tarefas', label: 'Tarefas', icon: ListChecks },
+  { to: '/hoje', label: 'Tarefas de Hoje', icon: Sun, badge: 'today' as const },
   { to: '/importantes', label: 'Importantes', icon: Star, badge: 'important' as const },
-  { to: '/recorrentes', label: 'Recorrentes', icon: Repeat },
   { to: '/calendario', label: 'Calendário', icon: CalendarDays }
+]
+
+/** Repeticoes, agrupadas a parte para nao alongar demais a lista principal. */
+const RECURRENCE_ITEMS = [
+  { to: '/diariamente', label: 'Diariamente', icon: Repeat },
+  { to: '/semanalmente', label: 'Semanalmente', icon: CalendarRange },
+  { to: '/mensalmente', label: 'Mensalmente', icon: CalendarClock }
 ]
 
 const MANAGE_ITEMS = [
@@ -109,6 +119,27 @@ export function AppSidebar(): React.JSX.Element {
                   {item.badge === 'important' && stats && stats.importantPending > 0 && (
                     <SidebarMenuBadge>{stats.importantPending}</SidebarMenuBadge>
                   )}
+                  {item.badge === 'today' && stats && stats.dueToday > 0 && (
+                    <SidebarMenuBadge>{stats.dueToday}</SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Repetições</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {RECURRENCE_ITEMS.map((item) => (
+                <SidebarMenuItem key={item.to}>
+                  <SidebarMenuButton asChild isActive={isActive(item.to)} tooltip={item.label}>
+                    <NavLink to={item.to}>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

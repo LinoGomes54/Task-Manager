@@ -9,8 +9,9 @@ import { TaskDialog } from '@/components/tasks/TaskDialog'
 import { AuthPage } from '@/pages/Auth'
 import { DashboardPage } from '@/pages/Dashboard'
 import { TasksPage } from '@/pages/Tasks'
+import { TodayPage } from '@/pages/Today'
 import { ImportantPage } from '@/pages/Important'
-import { RecurringPage } from '@/pages/Recurring'
+import { DailyPage, WeeklyPage, MonthlyPage } from '@/pages/Recurrence'
 import { CalendarPage } from '@/pages/CalendarPage'
 import { CategoriesPage } from '@/pages/Categories'
 import { SettingsPage } from '@/pages/Settings'
@@ -74,8 +75,13 @@ function Root(): React.JSX.Element {
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
           <Route path="tarefas" element={<TasksPage />} />
+          <Route path="hoje" element={<TodayPage />} />
           <Route path="importantes" element={<ImportantPage />} />
-          <Route path="recorrentes" element={<RecurringPage />} />
+          <Route path="diariamente" element={<DailyPage />} />
+          <Route path="semanalmente" element={<WeeklyPage />} />
+          <Route path="mensalmente" element={<MonthlyPage />} />
+          {/* Rota antiga, mantida para nao quebrar link salvo ou atalho da bandeja. */}
+          <Route path="recorrentes" element={<Navigate to="/diariamente" replace />} />
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="categorias" element={<CategoriesPage />} />
           <Route path="configuracoes" element={<SettingsPage />} />
