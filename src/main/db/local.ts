@@ -25,7 +25,35 @@ export function initLocalDb(): DatabaseSync {
   const file = join(app.getPath('userData'), 'task-manager.db')
   db = new DatabaseSync(file)
   db.exec(LOCAL_SCHEMA_SQL)
+  runLocalMigrations(db)
   return db
+}
+
+/**
+ * Colunas adicionadas depois que o app ja rodou em alguma maquina.
+ *
+ * O `CREATE TABLE IF NOT EXISTS` do schema so cobre bancos novos — quem ja tinha
+ * o arquivo criado nao ganharia a coluna. Aqui conferimos o que existe de fato e
+ * completamos o que falta, o que torna a atualizacao do app segura.
+ *
+ * O banco remoto tem seu proprio caminho de evolucao: `prisma/migrations`.
+ */
+const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition: string }> = [
+  {
+    table: 'user_settings',
+    column: 'lock_future_recurring',
+    definition: 'INTEGER NOT NULL DEFAULT 1'
+  }
+]
+
+function runLocalMigrations(conn: DatabaseSync): void {
+  for (const { table, column, definition } of LOCAL_COLUMN_MIGRATIONS) {
+    const columns = conn.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>
+    if (columns.length === 0) continue // tabela ainda nao existe
+    if (columns.some((c) => c.name === column)) continue
+
+    conn.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  }
 }
 
 export function closeLocalDb(): void {
