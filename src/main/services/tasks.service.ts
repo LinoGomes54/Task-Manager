@@ -1,4 +1,6 @@
 import { queryAll, queryOne, execute, now, newId, toBool } from '../db/local'
+import { getSettings } from './settings.service'
+import { isFutureRecurrence, FUTURE_RECURRENCE_MESSAGE } from '@shared/task-rules'
 import type {
   Task,
   CreateTaskInput,
@@ -62,6 +64,10 @@ export function listTasks(userId: string, filters: TaskFilters = {}): Task[] {
   }
   if (filters.onlyImportant) where.push('is_important = 1')
   if (filters.onlyRecurring) where.push("recurrence <> 'none'")
+  if (filters.recurrence) {
+    where.push('recurrence = ?')
+    params.push(filters.recurrence)
+  }
   if (filters.from) {
     where.push('due_at >= ?')
     params.push(filters.from)
@@ -69,6 +75,13 @@ export function listTasks(userId: string, filters: TaskFilters = {}): Task[] {
   if (filters.to) {
     where.push('due_at <= ?')
     params.push(filters.to)
+  }
+  if (filters.dueScope === 'no_due') {
+    where.push('due_at IS NULL')
+  }
+  if (filters.dueScope === 'overdue') {
+    where.push("due_at IS NOT NULL AND due_at < ? AND status <> 'done'")
+    params.push(now())
   }
 
   return queryAll<Row>(
@@ -195,6 +208,12 @@ export function removeTask(userId: string, id: string): void {
 export function toggleComplete(userId: string, id: string): Task {
   const task = getTask(userId, id)
   if (!task) throw new Error('Tarefa não encontrada.')
+
+  // A interface ja desabilita o controle; esta checagem existe porque o backend
+  // nao pode confiar em validacao feita do outro lado do IPC.
+  if (isFutureRecurrence(task, getSettings(userId).lockFutureRecurring)) {
+    throw new Error(FUTURE_RECURRENCE_MESSAGE)
+  }
 
   const completing = task.status !== 'done'
   const timestamp = now()
@@ -348,18 +367,20 @@ export function getStats(userId: string): DashboardStats {
   )
 
   const byCategory = queryAll<Row>(
-    `SELECT c.id AS category_id, c.name AS name, c.color AS color, COUNT(t.id) AS count
+    `SELECT c.id AS category_id, c.name AS name, c.color AS color, c.icon AS icon,
+            COUNT(t.id) AS count
      FROM categories c
      LEFT JOIN tasks t
        ON t.category_id = c.id AND t.deleted_at IS NULL AND t.status <> 'done'
      WHERE c.user_id = ? AND c.deleted_at IS NULL
-     GROUP BY c.id, c.name, c.color
+     GROUP BY c.id, c.name, c.color, c.icon
      ORDER BY count DESC, c.name COLLATE NOCASE`,
     [userId]
   ).map((row) => ({
     categoryId: row.category_id === null ? null : String(row.category_id),
     name: String(row.name),
     color: String(row.color),
+    icon: row.icon === null ? null : String(row.icon),
     count: Number(row.count)
   }))
 

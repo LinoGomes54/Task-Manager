@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   notifications_enabled INTEGER NOT NULL DEFAULT 1,
   sound_enabled         INTEGER NOT NULL DEFAULT 1,
   reminder_lead_minutes INTEGER NOT NULL DEFAULT 15,
+  lock_future_recurring INTEGER NOT NULL DEFAULT 1,
   theme                 TEXT NOT NULL DEFAULT 'system',
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
@@ -143,6 +144,7 @@ export const SYNC_COLUMNS: Record<SyncTable, string[]> = {
     'notifications_enabled',
     'sound_enabled',
     'reminder_lead_minutes',
+    'lock_future_recurring',
     'theme',
     'created_at',
     'updated_at',
@@ -160,7 +162,8 @@ export const BOOLEAN_COLUMNS: Record<SyncTable, string[]> = {
     'start_minimized',
     'close_to_tray',
     'notifications_enabled',
-    'sound_enabled'
+    'sound_enabled',
+    'lock_future_recurring'
   ]
 }
 

@@ -54,6 +54,11 @@ export interface AppSettings {
   notificationsEnabled: boolean
   soundEnabled: boolean
   reminderLeadMinutes: number
+  /**
+   * Impede concluir repeticoes futuras de tarefas recorrentes — so a ocorrencia
+   * de hoje (ou uma ja atrasada) pode ser marcada. Ligado por padrao.
+   */
+  lockFutureRecurring: boolean
   theme: ThemePreference
   updatedAt: string
 }
@@ -82,10 +87,21 @@ export interface TaskFilters {
   priority?: TaskPriority | 'all'
   onlyImportant?: boolean
   onlyRecurring?: boolean
+  /** Filtra por uma regra de repeticao especifica (abas Diariamente/Semanalmente/Mensalmente). */
+  recurrence?: RecurrenceRule
   /** ISO date (inclusive) — filtra por `dueAt`. */
   from?: string
   /** ISO date (inclusive) — filtra por `dueAt`. */
   to?: string
+  /**
+   * Recorte por prazo, independente de `from`/`to`:
+   * - `overdue`  → pendentes cujo `dueAt` ja passou
+   * - `no_due`   → tarefas sem prazo definido (`dueAt IS NULL`)
+   *
+   * Existe porque `dueAt >= from` descarta silenciosamente as linhas com `NULL`,
+   * o que fazia as tarefas sem prazo sumirem do dashboard.
+   */
+  dueScope?: 'overdue' | 'no_due'
 }
 
 export interface CreateCategoryInput {
@@ -102,7 +118,13 @@ export interface DashboardStats {
   completedThisMonth: number
   pendingTotal: number
   importantPending: number
-  byCategory: Array<{ categoryId: string | null; name: string; color: string; count: number }>
+  byCategory: Array<{
+    categoryId: string | null
+    name: string
+    color: string
+    icon: string | null
+    count: number
+  }>
 }
 
 /** Estado da sincronizacao exposto ao renderer. */
