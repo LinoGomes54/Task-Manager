@@ -70,7 +70,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
     <>
       <div
         className={cn(
-          'group bg-card hover:border-ring/40 flex items-center gap-2.5 rounded-[10px] border px-[11px] transition-colors',
+          'group bg-card hover:border-ring/40 flex items-center gap-3 rounded-xl border px-4 transition-colors',
           done && 'opacity-55'
         )}
         style={{ paddingBlock: 'var(--row-padding)' }}
@@ -114,7 +114,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
 
           {hasSubline && (
             <p
-              className="mt-[3px] flex items-center gap-1.5 truncate text-[11px]"
+              className="mt-1 flex items-center gap-1.5 truncate text-[12px]"
               style={{ color: 'var(--faint)' }}
             >
               {category && (
@@ -144,7 +144,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
         {/* Metadados a direita, na ordem do design: horario, prioridade, acoes. */}
         {task.dueAt && (
           <span
-            className={cn('shrink-0 font-mono text-[11px]', late && 'text-destructive')}
+            className={cn('shrink-0 font-mono text-[12px]', late && 'text-destructive')}
             style={late ? undefined : { color: 'var(--faint)' }}
             title={formatDueDate(task.dueAt)}
           >
@@ -154,7 +154,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
 
         {priority && !done && (
           <span
-            className="shrink-0 rounded-[5px] px-1.5 py-px font-mono text-[10.5px] font-medium text-white"
+            className="shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] font-medium text-white"
             style={{ backgroundColor: priority.color }}
             title={`Prioridade ${priority.label === 'P1' ? 'alta' : 'média'}`}
           >
@@ -173,7 +173,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
         >
           <Star
             className={cn(
-              'size-[15px]',
+              'size-[17px]',
               task.isImportant ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'
             )}
           />
@@ -184,7 +184,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
             <Button
               variant="ghost"
               size="icon"
-              className="size-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
             >
               <MoreHorizontal className="size-4" />
               <span className="sr-only">Ações da tarefa</span>

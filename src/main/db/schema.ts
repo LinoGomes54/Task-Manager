@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   reminder_lead_minutes INTEGER NOT NULL DEFAULT 15,
   lock_future_recurring INTEGER NOT NULL DEFAULT 1,
   theme                 TEXT NOT NULL DEFAULT 'system',
-  density               TEXT NOT NULL DEFAULT 'compacto',
+  density               TEXT NOT NULL DEFAULT 'espacoso',
   accent_color          TEXT NOT NULL DEFAULT '#5b5bd6',
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,

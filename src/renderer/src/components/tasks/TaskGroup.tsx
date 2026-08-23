@@ -28,18 +28,18 @@ export function TaskGroup({
 
   return (
     <section>
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2.5 flex items-center gap-2">
         <span className={cn(tone === 'danger' ? 'text-destructive' : 'text-muted-foreground')}>
           {icon}
         </span>
-        <h2 className={cn('text-sm font-semibold', tone === 'danger' && 'text-destructive')}>
+        <h2 className={cn('text-[14px] font-semibold', tone === 'danger' && 'text-destructive')}>
           {title}
         </h2>
-        <span className="text-muted-foreground text-xs tabular-nums">{tasks.length}</span>
+        <span className="text-muted-foreground text-[12.5px] tabular-nums">{tasks.length}</span>
         {hint && <span className="text-muted-foreground ml-1 text-xs">· {hint}</span>}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {tasks.map((task) => (
           <TaskItem key={task.id} task={task} />
         ))}

@@ -46,7 +46,7 @@ interface AppearanceStore {
 
 export const useThemeStore = create<AppearanceStore>((set) => ({
   theme: 'system',
-  density: 'compacto',
+  density: 'espacoso',
   accentColor: DEFAULT_ACCENT,
   setTheme: (theme) => set({ theme }),
   setDensity: (density) => set({ density }),

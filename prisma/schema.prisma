@@ -88,7 +88,7 @@ model UserSettings {
   reminderLeadMinutes  Int       @default(15) @map("reminder_lead_minutes")
   lockFutureRecurring  Boolean   @default(true) @map("lock_future_recurring")
   theme                String    @default("system")
-  density              String    @default("compacto")
+  density              String    @default("espacoso")
   accentColor          String    @default("#5b5bd6") @map("accent_color")
   createdAt            DateTime  @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime  @map("updated_at") @db.Timestamptz(6)

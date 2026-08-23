@@ -26,12 +26,12 @@ export function Panel({
   children
 }: PanelProps): React.JSX.Element {
   return (
-    <section className={cn('bg-card rounded-2xl border p-3.5', className)}>
-      <header className="mb-2.5 flex items-center justify-between gap-3 px-0.5">
-        <h2 className="text-[13px] font-semibold">{title}</h2>
+    <section className={cn('bg-card rounded-2xl border p-5', className)}>
+      <header className="mb-3.5 flex items-center justify-between gap-3 px-0.5">
+        <h2 className="text-[14.5px] font-semibold">{title}</h2>
         <div className="flex items-center gap-2">
           {meta && (
-            <span className="font-mono text-[11px]" style={{ color: 'var(--faint)' }}>
+            <span className="font-mono text-[12px]" style={{ color: 'var(--faint)' }}>
               {meta}
             </span>
           )}

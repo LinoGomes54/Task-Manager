@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Search, LogOut, Palette, PanelLeft } from 'lucide-react'
+import { Search, LogOut, Palette, PanelLeft, Tags, Settings } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,6 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useStats } from '@/hooks/use-tasks'
 import { useCategories } from '@/hooks/use-categories'
 import { useSettings } from '@/hooks/use-settings'
-import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -37,7 +36,8 @@ import { cn } from '@/lib/utils'
 const WORKSPACE = [
   { to: '/', label: 'Painel', meta: 'visão do dia', end: true },
   { to: '/tarefas', label: 'Tarefas', meta: 'lista completa' },
-  { to: '/calendario', label: 'Calendário', meta: 'mês' }
+  { to: '/calendario', label: 'Calendário', meta: 'mês' },
+  { to: '/playground', label: 'Playground', meta: 'cronômetro' }
 ]
 
 const RECURRENCE = [
@@ -133,28 +133,19 @@ export function AppSidebar(): React.JSX.Element {
           ))}
         </NavSection>
 
-        <NavSection label="Categorias">
-          {categories.slice(0, 6).map((category) => (
-            <NavRow
-              key={category.id}
-              to={`/tarefas?categoria=${category.id}`}
-              label={category.name}
-              meta={stats?.byCategory.find((c) => c.categoryId === category.id)?.count}
-              active={false}
-              icon={
-                <CategoryIcon
-                  icon={category.icon}
-                  color={category.color}
-                  variant="plain"
-                  className="size-3.5"
-                />
-              }
-            />
-          ))}
+        <NavSection label="Gerenciar">
           <NavRow
             to="/categorias"
-            label="Gerenciar categorias"
+            label="Categorias"
+            meta={categories.length || undefined}
             active={isActive('/categorias')}
+            icon={<Tags className="size-3.5" />}
+          />
+          <NavRow
+            to="/configuracoes"
+            label="Configurações"
+            active={isActive('/configuracoes')}
+            icon={<Settings className="size-3.5" />}
           />
         </NavSection>
       </SidebarContent>
@@ -163,8 +154,16 @@ export function AppSidebar(): React.JSX.Element {
         <NavRow
           to="/configuracoes"
           label="Aparência"
-          meta={settings ? `${settings.theme === 'dark' ? 'escuro' : settings.theme === 'light' ? 'claro' : 'sistema'}` : 'tema · cor'}
-          active={isActive('/configuracoes')}
+          meta={
+            settings
+              ? settings.theme === 'dark'
+                ? 'escuro'
+                : settings.theme === 'light'
+                  ? 'claro'
+                  : 'sistema'
+              : 'tema · cor'
+          }
+          active={false}
           icon={<Palette className="size-3.5" />}
         />
 
@@ -176,8 +175,8 @@ export function AppSidebar(): React.JSX.Element {
             {initials(session?.user.name ?? '?')}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[12.5px] font-semibold">{session?.user.name}</p>
-            <p className="text-muted-foreground truncate text-[10.5px]">{session?.user.email}</p>
+            <p className="truncate text-[13.5px] font-semibold">{session?.user.name}</p>
+            <p className="text-muted-foreground truncate text-[11.5px]">{session?.user.email}</p>
           </div>
           <button
             type="button"
@@ -220,12 +219,12 @@ function NavSection({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <SidebarGroup className="gap-1.5 py-1.5">
+    <SidebarGroup className="gap-1 py-1">
       <SidebarGroupLabel className="section-label h-auto px-2 pb-0.5">
         {label}
       </SidebarGroupLabel>
       <SidebarGroupContent>
-        <div className="flex flex-col gap-[3px]">{children}</div>
+        <div className="flex flex-col gap-0.5">{children}</div>
       </SidebarGroupContent>
     </SidebarGroup>
   )
@@ -252,7 +251,7 @@ function NavRow({ to, label, meta, active, icon }: NavRowProps): React.JSX.Eleme
       to={to}
       title={label}
       className={cn(
-        'flex w-full items-center justify-between gap-2 rounded-lg px-2 py-[7px] text-[12.5px] transition-colors',
+        'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-[7px] text-[13px] transition-colors',
         'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0',
         active
           ? 'bg-sidebar-accent nav-active font-semibold'
@@ -266,7 +265,7 @@ function NavRow({ to, label, meta, active, icon }: NavRowProps): React.JSX.Eleme
       {showMeta && (
         <span
           className={cn(
-            'shrink-0 text-[11px] group-data-[collapsible=icon]:hidden',
+            'shrink-0 text-[12px] group-data-[collapsible=icon]:hidden',
             typeof meta === 'number' ? 'font-mono' : '',
             'text-muted-foreground'
           )}
@@ -311,14 +310,14 @@ function SidebarSearch(): React.JSX.Element {
 
   return (
     <form onSubmit={submit} className="group-data-[collapsible=icon]:hidden">
-      <div className="border-border bg-card focus-within:border-ring flex items-center gap-2 rounded-[9px] border px-2.5 py-1.5 transition-colors">
+      <div className="border-border bg-card focus-within:border-ring flex items-center gap-2 rounded-[9px] border px-3 py-2 transition-colors">
         <Search className="size-3.5 shrink-0" style={{ color: 'var(--faint)' }} />
         <input
           ref={inputRef}
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           placeholder="Buscar"
-          className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-[color:var(--faint)]"
+          className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[color:var(--faint)]"
         />
         <kbd
           className="font-mono text-[10.5px] shrink-0"

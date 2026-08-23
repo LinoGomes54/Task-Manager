@@ -207,17 +207,23 @@
 /* conjunto. Sao variaveis para a troca ser instantanea, sem recarregar.*/
 /* ------------------------------------------------------------------ */
 
-:root,
+/*
+  O design foi desenhado numa escala bem miuda (13,5px). Numa janela de desktop
+  de verdade isso fica apertado demais para uso diario, entao a escala inteira
+  subiu um degrau — e "espacoso" virou o padrao. Quem quiser a densidade
+  original do design escolhe "compacto" em Configuracoes.
+*/
 [data-density='compacto'] {
-  --row-padding: 0.5rem; /* 8px */
-  --stack-gap: 0.875rem; /* 14px */
-  --text-base-size: 0.84375rem; /* 13.5px */
+  --row-padding: 0.625rem; /* 10px */
+  --stack-gap: 1rem; /* 16px */
+  --text-base-size: 0.875rem; /* 14px */
 }
 
+:root,
 [data-density='espacoso'] {
-  --row-padding: 0.8125rem; /* 13px */
-  --stack-gap: 1.25rem; /* 20px */
-  --text-base-size: 0.90625rem; /* 14.5px */
+  --row-padding: 0.9375rem; /* 15px */
+  --stack-gap: 1.375rem; /* 22px */
+  --text-base-size: 0.9375rem; /* 15px */
 }
 
 @layer base {

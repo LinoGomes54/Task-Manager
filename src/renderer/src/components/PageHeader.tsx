@@ -21,12 +21,12 @@ export function PageHeader({
   action
 }: PageHeaderProps): React.JSX.Element {
   return (
-    <div className="border-border/70 mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-2 border-b pb-3">
-      <h1 className="text-[15px] font-semibold tracking-tight">{title}</h1>
+    <div className="border-border/70 mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-2 border-b pb-4">
+      <h1 className="text-[18px] font-semibold tracking-tight">{title}</h1>
 
       {description && (
         <p
-          className="min-w-0 flex-1 truncate text-[12px] first-letter:uppercase"
+          className="min-w-0 flex-1 truncate text-[13px] first-letter:uppercase"
           style={{ color: 'var(--faint)' }}
           title={description}
         >
@@ -35,7 +35,7 @@ export function PageHeader({
       )}
 
       {stats && (
-        <p className="shrink-0 text-[11.5px]" style={{ color: 'var(--faint)' }}>
+        <p className="shrink-0 text-[12.5px]" style={{ color: 'var(--faint)' }}>
           {stats}
         </p>
       )}
