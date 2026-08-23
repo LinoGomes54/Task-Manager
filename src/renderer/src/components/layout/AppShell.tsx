@@ -20,17 +20,22 @@ function Topbar(): React.JSX.Element {
 
   return (
     <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleSidebar}
-        aria-label={state === 'expanded' ? 'Recolher menu' : 'Expandir menu'}
-        title="Recolher/expandir menu (Ctrl+B)"
-      >
-        <PanelLeft className="size-4" />
-      </Button>
-
-      <Separator orientation="vertical" className="mr-1 h-5" />
+      {/* So aparece com a barra recolhida: expandida, o botao de recolher fica
+          dentro dela, como no design. */}
+      {state === 'collapsed' && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            aria-label="Expandir menu"
+            title="Expandir menu (Ctrl+B)"
+          >
+            <PanelLeft className="size-4" />
+          </Button>
+          <Separator orientation="vertical" className="mr-1 h-5" />
+        </>
+      )}
 
       <div className="flex-1" />
 
