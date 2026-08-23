@@ -31,13 +31,32 @@ export function TasksPage(): React.JSX.Element {
   const [status, setStatus] = useState<TaskStatus | typeof ALL>(ALL)
   const [priority, setPriority] = useState<TaskPriority | typeof ALL>(ALL)
 
-  // `?nova=1` vem do menu da bandeja: abre o dialogo direto.
+  // Parametros de URL: `nova=1` vem do menu da bandeja, `q` da busca da barra
+  // lateral e `categoria` do clique numa categoria no painel ou na navegacao.
   useEffect(() => {
+    let mudou = false
+
     if (searchParams.get('nova') === '1') {
       openNew()
       searchParams.delete('nova')
-      setSearchParams(searchParams, { replace: true })
+      mudou = true
     }
+
+    const q = searchParams.get('q')
+    if (q !== null) {
+      setSearch(q)
+      searchParams.delete('q')
+      mudou = true
+    }
+
+    const categoria = searchParams.get('categoria')
+    if (categoria !== null) {
+      setCategoryId(categoria || ALL)
+      searchParams.delete('categoria')
+      mudou = true
+    }
+
+    if (mudou) setSearchParams(searchParams, { replace: true })
   }, [searchParams, setSearchParams, openNew])
 
   const filters: TaskFilters = {
@@ -54,6 +73,7 @@ export function TasksPage(): React.JSX.Element {
       <PageHeader
         title="Tarefas"
         description="Busque, filtre e organize tudo que você anotou."
+        stats={tasks ? `${tasks.length} ${tasks.length === 1 ? 'tarefa' : 'tarefas'}` : undefined}
         action={
           <Button onClick={() => openNew()} className="gap-1.5">
             <Plus className="size-4" />
