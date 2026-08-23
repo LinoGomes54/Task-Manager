@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Power, Bell, Palette, Cloud, RefreshCw, Info } from 'lucide-react'
+import { Power, Bell, Palette, Cloud, RefreshCw, Info, Repeat } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -156,6 +156,27 @@ export function SettingsPage(): React.JSX.Element {
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Repeat className="size-4" />
+              Tarefas recorrentes
+            </CardTitle>
+            <CardDescription>
+              Como o app trata as repetições que ainda não chegaram.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Row
+              id="lock-future-recurring"
+              label="Só concluir a repetição no dia dela"
+              hint="Impede marcar uma repetição futura antes da hora. Tarefas atrasadas continuam liberadas, para você nunca ficar sem poder concluir o que esqueceu."
+              checked={settings.lockFutureRecurring}
+              onChange={(value) => patch({ lockFutureRecurring: value })}
+            />
           </CardContent>
         </Card>
 

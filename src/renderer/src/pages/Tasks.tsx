@@ -62,8 +62,10 @@ export function TasksPage(): React.JSX.Element {
         }
       />
 
+      {/* Os filtros quebram linha antes de espremer: cada um tem largura minima
+          propria e a busca ocupa o espaco que sobra. */}
       <div className="mb-4 flex flex-wrap gap-3">
-        <div className="relative min-w-56 flex-1">
+        <div className="relative min-w-56 flex-1 basis-56">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             value={search}
@@ -74,7 +76,7 @@ export function TasksPage(): React.JSX.Element {
         </div>
 
         <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-44 shrink-0">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -88,7 +90,7 @@ export function TasksPage(): React.JSX.Element {
         </Select>
 
         <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40 shrink-0">
             <SelectValue placeholder="Situação" />
           </SelectTrigger>
           <SelectContent>
@@ -102,7 +104,7 @@ export function TasksPage(): React.JSX.Element {
         </Select>
 
         <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)}>
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-36 shrink-0">
             <SelectValue placeholder="Prioridade" />
           </SelectTrigger>
           <SelectContent>

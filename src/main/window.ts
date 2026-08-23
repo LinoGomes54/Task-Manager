@@ -30,8 +30,11 @@ export function createWindow(options: { startHidden: boolean; closeToTray: () =>
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
-    minWidth: 940,
-    minHeight: 620,
+    // Piso do redimensionamento. A interface se adapta acima disso, mas abaixo
+    // a grade do calendario e os filtros comecariam a se sobrepor — e melhor o
+    // Windows impedir de encolher do que entregar um layout quebrado.
+    minWidth: 900,
+    minHeight: 640,
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#0b0f19',

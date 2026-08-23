@@ -48,10 +48,18 @@ export function AppShell(): React.JSX.Element {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex h-screen flex-col overflow-hidden">
+      {/* `min-w-0` e essencial num filho de flex: sem ele o conteudo largo
+          (tabelas, listas) empurra o container em vez de rolar dentro dele. */}
+      <SidebarInset className="flex h-screen min-w-0 flex-col overflow-hidden">
         <Topbar />
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-6xl p-6">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          {/*
+            `@container` faz as paginas reagirem a largura REAL do conteudo, e nao
+            a da janela. Sem isso, recolher a sidebar (que devolve ~200px) nao
+            mudava nada, e uma janela de 1264px caia para uma coluna so por estar
+            1px abaixo do breakpoint `xl`.
+          */}
+          <div className="@container mx-auto w-full max-w-6xl p-4 sm:p-6">
             <Outlet />
           </div>
         </div>

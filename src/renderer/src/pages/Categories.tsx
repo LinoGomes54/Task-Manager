@@ -30,6 +30,8 @@ import {
   useUpdateCategory
 } from '@/hooks/use-categories'
 import { useStats } from '@/hooks/use-tasks'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
+import { IconPicker } from '@/components/categories/IconPicker'
 import { cn } from '@/lib/utils'
 import type { Category } from '@shared/types'
 
@@ -56,6 +58,7 @@ export function CategoriesPage(): React.JSX.Element {
   const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState('')
   const [color, setColor] = useState(PALETTE[0])
+  const [icon, setIcon] = useState<string>('tag')
   const [deleting, setDeleting] = useState<Category | null>(null)
 
   const countByCategory = new Map(
@@ -66,6 +69,7 @@ export function CategoriesPage(): React.JSX.Element {
     setEditing(null)
     setName('')
     setColor(PALETTE[0])
+    setIcon('tag')
     setDialogOpen(true)
   }
 
@@ -73,6 +77,7 @@ export function CategoriesPage(): React.JSX.Element {
     setEditing(category)
     setName(category.name)
     setColor(category.color)
+    setIcon(category.icon ?? 'tag')
     setDialogOpen(true)
   }
 
@@ -80,8 +85,8 @@ export function CategoriesPage(): React.JSX.Element {
     event.preventDefault()
     if (!name.trim()) return
 
-    if (editing) await updateCategory.mutateAsync({ id: editing.id, name, color })
-    else await createCategory.mutateAsync({ name, color })
+    if (editing) await updateCategory.mutateAsync({ id: editing.id, name, color, icon })
+    else await createCategory.mutateAsync({ name, color, icon })
 
     setDialogOpen(false)
   }
@@ -111,14 +116,11 @@ export function CategoriesPage(): React.JSX.Element {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
         {categories.map((category) => (
           <Card key={category.id} className="group">
             <CardContent className="flex items-center gap-3 py-4">
-              <span
-                className="size-9 shrink-0 rounded-lg"
-                style={{ backgroundColor: category.color }}
-              />
+              <CategoryIcon icon={category.icon} color={category.color} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{category.name}</p>
                 <p className="text-muted-foreground text-xs">
@@ -161,6 +163,15 @@ export function CategoriesPage(): React.JSX.Element {
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
+              {/* Previa: mostra de imediato como a categoria vai aparecer nas listas. */}
+              <div className="bg-muted/40 flex items-center gap-3 rounded-lg border p-3">
+                <CategoryIcon icon={icon} color={color} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{name.trim() || 'Nova categoria'}</p>
+                  <p className="text-muted-foreground text-xs">Prévia</p>
+                </div>
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="category-name">Nome</Label>
                 <Input
@@ -192,6 +203,11 @@ export function CategoriesPage(): React.JSX.Element {
                     />
                   ))}
                 </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Ícone</Label>
+                <IconPicker value={icon} onChange={setIcon} color={color} />
               </div>
             </div>
 
