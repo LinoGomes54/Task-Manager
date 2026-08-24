@@ -14,6 +14,20 @@ import type {
 
 type Row = Record<string, unknown>
 
+/** Os dias da semana viajam como CSV ("1,3,5") para caber numa coluna de texto. */
+function parseWeekdays(value: unknown): number[] {
+  if (typeof value !== 'string' || value.trim() === '') return []
+  return value
+    .split(',')
+    .map((n) => Number(n.trim()))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
+}
+
+function serializeWeekdays(days: number[] | undefined): string {
+  if (!days || days.length === 0) return ''
+  return [...new Set(days)].filter((n) => n >= 0 && n <= 6).sort((a, b) => a - b).join(',')
+}
+
 function mapTask(row: Row): Task {
   return {
     id: String(row.id),
@@ -30,6 +44,7 @@ function mapTask(row: Row): Task {
     completedAt: row.completed_at === null ? null : String(row.completed_at),
     recurrence: String(row.recurrence) as RecurrenceRule,
     recurrenceInterval: Number(row.recurrence_interval),
+    recurrenceWeekdays: parseWeekdays(row.recurrence_weekdays),
     recurrenceUntil: row.recurrence_until === null ? null : String(row.recurrence_until),
     parentTaskId: row.parent_task_id === null ? null : String(row.parent_task_id),
     createdAt: String(row.created_at),
@@ -116,9 +131,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
   execute(
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
-       due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_until,
-       parent_task_id, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 1)`,
+       due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
+       recurrence_until, parent_task_id, created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 1)`,
     [
       id,
       userId,
@@ -132,6 +147,7 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
       input.remindMinutesBefore ?? 15,
       input.recurrence ?? 'none',
       input.recurrenceInterval ?? 1,
+      serializeWeekdays(input.recurrenceWeekdays),
       input.recurrenceUntil ?? null,
       timestamp,
       timestamp
@@ -152,6 +168,7 @@ const UPDATABLE = {
   remindMinutesBefore: 'remind_minutes_before',
   recurrence: 'recurrence',
   recurrenceInterval: 'recurrence_interval',
+  recurrenceWeekdays: 'recurrence_weekdays',
   recurrenceUntil: 'recurrence_until'
 } as const
 
@@ -166,7 +183,8 @@ export function updateTask(userId: string, input: UpdateTaskInput): Task {
     const value = input[key as keyof typeof UPDATABLE]
     if (value === undefined) continue
     assignments.push(`${column} = ?`)
-    params.push(typeof value === 'string' && key === 'title' ? value.trim() : value)
+    if (key === 'recurrenceWeekdays') params.push(serializeWeekdays(value as number[]))
+    else params.push(typeof value === 'string' && key === 'title' ? value.trim() : value)
   }
 
   // Mudou o prazo? O lembrete precisa poder disparar de novo.
@@ -244,8 +262,19 @@ export function toggleImportant(userId: string, id: string): Task {
 /* Recorrencia                                                         */
 /* ------------------------------------------------------------------ */
 
-/** Avanca uma data conforme a regra de recorrencia. */
-export function advanceDate(date: Date, rule: RecurrenceRule, interval: number): Date {
+/**
+ * Avanca uma data conforme a regra de recorrencia.
+ *
+ * Na regra semanal com dias marcados, o proximo prazo e o **proximo dia marcado**
+ * — uma tarefa de segunda, quarta e sexta anda de dois em dois dias dentro da
+ * semana, e so aplica o intervalo ao virar para a semana seguinte.
+ */
+export function advanceDate(
+  date: Date,
+  rule: RecurrenceRule,
+  interval: number,
+  weekdays: number[] = []
+): Date {
   const next = new Date(date)
   const step = Math.max(1, interval)
 
@@ -253,9 +282,22 @@ export function advanceDate(date: Date, rule: RecurrenceRule, interval: number):
     case 'daily':
       next.setDate(next.getDate() + step)
       break
-    case 'weekly':
-      next.setDate(next.getDate() + 7 * step)
+    case 'weekly': {
+      const dias = [...new Set(weekdays)].sort((a, b) => a - b)
+      if (dias.length === 0) {
+        next.setDate(next.getDate() + 7 * step)
+        break
+      }
+      const atual = next.getDay()
+      const aindaEstaSemana = dias.find((d) => d > atual)
+      if (aindaEstaSemana !== undefined) {
+        next.setDate(next.getDate() + (aindaEstaSemana - atual))
+      } else {
+        // Volta para o primeiro dia marcado, ja na proxima rodada de semanas.
+        next.setDate(next.getDate() + (7 - atual + dias[0]) + 7 * (step - 1))
+      }
       break
+    }
     case 'monthly':
       next.setMonth(next.getMonth() + step)
       break
@@ -270,13 +312,13 @@ export function advanceDate(date: Date, rule: RecurrenceRule, interval: number):
 
 function createNextOccurrence(userId: string, task: Task): void {
   const base = task.dueAt ? new Date(task.dueAt) : new Date()
-  let next = advanceDate(base, task.recurrence, task.recurrenceInterval)
+  let next = advanceDate(base, task.recurrence, task.recurrenceInterval, task.recurrenceWeekdays)
 
   // Se o prazo original ja passou ha varias repeticoes, pula para a proxima futura.
   const limit = 500
   let steps = 0
   while (next.getTime() <= Date.now() && steps < limit) {
-    next = advanceDate(next, task.recurrence, task.recurrenceInterval)
+    next = advanceDate(next, task.recurrence, task.recurrenceInterval, task.recurrenceWeekdays)
     steps++
   }
 
@@ -286,9 +328,9 @@ function createNextOccurrence(userId: string, task: Task): void {
   execute(
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
-       due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_until,
-       parent_task_id, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
+       recurrence_until, parent_task_id, created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
     [
       newId(),
       userId,
@@ -301,6 +343,7 @@ function createNextOccurrence(userId: string, task: Task): void {
       task.remindMinutesBefore,
       task.recurrence,
       task.recurrenceInterval,
+      serializeWeekdays(task.recurrenceWeekdays),
       task.recurrenceUntil,
       task.parentTaskId ?? task.id,
       timestamp,

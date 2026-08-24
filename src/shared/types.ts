@@ -41,6 +41,11 @@ export interface Task {
   completedAt: string | null
   recurrence: RecurrenceRule
   recurrenceInterval: number
+  /**
+   * Dias da semana de uma repeticao semanal, no formato de `Date.getDay()`
+   * (0 = domingo … 6 = sabado). Vazio significa "todo dia da semana do prazo".
+   */
+  recurrenceWeekdays: number[]
   recurrenceUntil: string | null
   parentTaskId: string | null
   createdAt: string
@@ -80,6 +85,7 @@ export interface CreateTaskInput {
   remindMinutesBefore?: number
   recurrence?: RecurrenceRule
   recurrenceInterval?: number
+  recurrenceWeekdays?: number[]
   recurrenceUntil?: string | null
 }
 

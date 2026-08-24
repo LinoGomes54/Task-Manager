@@ -49,7 +49,8 @@ const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition
     table: 'user_settings',
     column: 'accent_color',
     definition: "TEXT NOT NULL DEFAULT '#5b5bd6'"
-  }
+  },
+  { table: 'tasks', column: 'recurrence_weekdays', definition: "TEXT NOT NULL DEFAULT ''" }
 ]
 
 function runLocalMigrations(conn: DatabaseSync): void {

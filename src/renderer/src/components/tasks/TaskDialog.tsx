@@ -36,6 +36,13 @@ import {
   combineDateTime,
   extractTime
 } from '@/lib/format'
+import {
+  WEEKDAYS,
+  scheduleFieldsFor,
+  firstOccurrence,
+  describeSchedule
+} from '@/lib/schedule'
+import { cn } from '@/lib/utils'
 import type { CreateTaskInput, RecurrenceRule, TaskPriority, TaskStatus } from '@shared/types'
 
 /** Formulario unico de criar e editar tarefa. */
@@ -53,6 +60,9 @@ interface FormState {
   remindMinutesBefore: number
   recurrence: RecurrenceRule
   recurrenceInterval: number
+  recurrenceWeekdays: number[]
+  /** Dia do mes de uma repeticao mensal. */
+  monthDay: number
 }
 
 const NO_CATEGORY = '__none__'
@@ -69,7 +79,9 @@ const EMPTY: FormState = {
   dueTime: '09:00',
   remindMinutesBefore: 15,
   recurrence: 'none',
-  recurrenceInterval: 1
+  recurrenceInterval: 1,
+  recurrenceWeekdays: [],
+  monthDay: new Date().getDate()
 }
 
 export function TaskDialog(): React.JSX.Element {
@@ -99,7 +111,9 @@ export function TaskDialog(): React.JSX.Element {
         dueTime: extractTime(editing.dueAt),
         remindMinutesBefore: editing.remindMinutesBefore,
         recurrence: editing.recurrence,
-        recurrenceInterval: editing.recurrenceInterval
+        recurrenceInterval: editing.recurrenceInterval,
+        recurrenceWeekdays: editing.recurrenceWeekdays,
+        monthDay: editing.dueAt ? parseISO(editing.dueAt).getDate() : new Date().getDate()
       })
       return
     }
@@ -116,7 +130,9 @@ export function TaskDialog(): React.JSX.Element {
       recurrence: suggestedRecurrence,
       hasDueDate: needsDueDate,
       dueDate: defaults?.dueAt ? parseISO(defaults.dueAt) : needsDueDate ? new Date() : undefined,
-      dueTime: defaults?.dueAt ? extractTime(defaults.dueAt) : '09:00'
+      dueTime: defaults?.dueAt ? extractTime(defaults.dueAt) : '09:00',
+      // Uma semanal sem dia marcado nao teria quando acontecer: sugerimos hoje.
+      recurrenceWeekdays: suggestedRecurrence === 'weekly' ? [new Date().getDay()] : []
     })
   }, [open, editing, defaults])
 
@@ -125,6 +141,22 @@ export function TaskDialog(): React.JSX.Element {
   }
 
   function buildPayload(): CreateTaskInput {
+    // Numa tarefa repetida o app calcula a primeira ocorrencia a partir da regra;
+    // so a tarefa avulsa (e a anual) usa a data escolhida na mao.
+    const dueAt =
+      form.recurrence === 'none'
+        ? form.hasDueDate && form.dueDate
+          ? combineDateTime(form.dueDate, form.dueTime)
+          : null
+        : (editing?.dueAt ??
+          firstOccurrence({
+            rule: form.recurrence,
+            time: form.dueTime,
+            weekdays: form.recurrenceWeekdays,
+            monthDay: form.monthDay,
+            date: form.dueDate
+          }))
+
     return {
       title: form.title,
       description: form.description.trim() || null,
@@ -132,11 +164,11 @@ export function TaskDialog(): React.JSX.Element {
       priority: form.priority,
       status: form.status,
       isImportant: form.isImportant,
-      dueAt:
-        form.hasDueDate && form.dueDate ? combineDateTime(form.dueDate, form.dueTime) : null,
+      dueAt,
       remindMinutesBefore: form.remindMinutesBefore,
       recurrence: form.recurrence,
-      recurrenceInterval: Math.max(1, form.recurrenceInterval)
+      recurrenceInterval: Math.max(1, form.recurrenceInterval),
+      recurrenceWeekdays: form.recurrence === 'weekly' ? form.recurrenceWeekdays : []
     }
   }
 
@@ -152,6 +184,17 @@ export function TaskDialog(): React.JSX.Element {
   }
 
   const saving = createTask.isPending || updateTask.isPending
+  const campos = scheduleFieldsFor(form.recurrence)
+  const resumo = describeSchedule({
+    rule: form.recurrence,
+    time: form.dueTime,
+    weekdays: form.recurrenceWeekdays,
+    monthDay: form.monthDay,
+    interval: form.recurrenceInterval
+  })
+
+  // Uma semanal sem nenhum dia marcado nao tem quando acontecer.
+  const semDiaMarcado = form.recurrence === 'weekly' && form.recurrenceWeekdays.length === 0
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
@@ -274,82 +317,12 @@ export function TaskDialog(): React.JSX.Element {
               />
             </div>
 
-            <div className="space-y-3 rounded-lg border p-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="has-due">Definir prazo</Label>
-                  <p className="text-muted-foreground text-xs">
-                    Necessário para o alarme e para aparecer no calendário
-                  </p>
-                </div>
-                <Switch
-                  id="has-due"
-                  checked={form.hasDueDate}
-                  onCheckedChange={(value) => update('hasDueDate', value)}
-                />
-              </div>
-
-              {form.hasDueDate && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="grid gap-2">
-                      <Label>Data</Label>
-                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="justify-start font-normal">
-                            <CalendarIcon className="mr-2 size-4" />
-                            {form.dueDate
-                              ? format(form.dueDate, "dd 'de' MMM", { locale: ptBR })
-                              : 'Escolher'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            locale={ptBR}
-                            selected={form.dueDate}
-                            onSelect={(date) => {
-                              update('dueDate', date)
-                              setCalendarOpen(false)
-                            }}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="due-time">Horário</Label>
-                      <Input
-                        id="due-time"
-                        type="time"
-                        value={form.dueTime}
-                        onChange={(event) => update('dueTime', event.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Lembrete</Label>
-                    <Select
-                      value={String(form.remindMinutesBefore)}
-                      onValueChange={(value) => update('remindMinutesBefore', Number(value))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {REMINDER_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={String(option.value)}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-            </div>
-
+            {/*
+              A repeticao vem ANTES do agendamento porque e ela que decide o que
+              perguntar: diaria pede horario, semanal pede os dias, mensal pede o
+              dia do mes. Perguntar "data + hora" para todas obrigava a escolher
+              um dia que o app ja sabe calcular.
+            */}
             <div className="grid gap-2">
               <Label>Repetição</Label>
               <div className="flex gap-3">
@@ -385,10 +358,140 @@ export function TaskDialog(): React.JSX.Element {
                   </div>
                 )}
               </div>
-              {form.recurrence !== 'none' && (
-                <p className="text-muted-foreground text-xs">
-                  Ao concluir, a próxima ocorrência é criada automaticamente.
-                </p>
+            </div>
+
+            <div className="space-y-3 rounded-lg border p-3">
+              {form.recurrence === 'none' ? (
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="has-due">Definir prazo</Label>
+                    <p className="text-muted-foreground text-xs">
+                      Necessário para o alarme e para aparecer no calendário
+                    </p>
+                  </div>
+                  <Switch
+                    id="has-due"
+                    checked={form.hasDueDate}
+                    onCheckedChange={(value) => update('hasDueDate', value)}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm font-medium">Quando</p>
+              )}
+
+              {(form.recurrence !== 'none' || form.hasDueDate) && (
+                <>
+                  {campos.needsWeekdays && (
+                    <div className="grid gap-2">
+                      <Label>Dias da semana</Label>
+                      <div className="flex gap-1.5">
+                        {WEEKDAYS.map((dia) => {
+                          const marcado = form.recurrenceWeekdays.includes(dia.value)
+                          return (
+                            <button
+                              key={dia.value}
+                              type="button"
+                              title={dia.label}
+                              aria-pressed={marcado}
+                              onClick={() =>
+                                update(
+                                  'recurrenceWeekdays',
+                                  marcado
+                                    ? form.recurrenceWeekdays.filter((d) => d !== dia.value)
+                                    : [...form.recurrenceWeekdays, dia.value]
+                                )
+                              }
+                              className={cn(
+                                'size-9 rounded-lg border text-[13px] font-medium transition-colors',
+                                marcado
+                                  ? 'border-[color:var(--accent-base)] bg-accent'
+                                  : 'hover:bg-accent/60 border-border text-muted-foreground'
+                              )}
+                            >
+                              {dia.short}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {campos.needsDate && (
+                      <div className="grid gap-2">
+                        <Label>Data</Label>
+                        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="justify-start font-normal">
+                              <CalendarIcon className="mr-2 size-4" />
+                              {form.dueDate
+                                ? format(form.dueDate, "dd 'de' MMM", { locale: ptBR })
+                                : 'Escolher'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              locale={ptBR}
+                              selected={form.dueDate}
+                              onSelect={(date) => {
+                                update('dueDate', date)
+                                setCalendarOpen(false)
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
+
+                    {campos.needsMonthDay && (
+                      <div className="grid gap-2">
+                        <Label htmlFor="month-day">Dia do mês</Label>
+                        <Input
+                          id="month-day"
+                          type="number"
+                          min={1}
+                          max={31}
+                          value={form.monthDay}
+                          onChange={(event) => update('monthDay', Number(event.target.value))}
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="due-time">Horário</Label>
+                      <Input
+                        id="due-time"
+                        type="time"
+                        value={form.dueTime}
+                        onChange={(event) => update('dueTime', event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Lembrete</Label>
+                    <Select
+                      value={String(form.remindMinutesBefore)}
+                      onValueChange={(value) => update('remindMinutesBefore', Number(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REMINDER_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={String(option.value)}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {form.recurrence !== 'none' && (
+                    <p className="text-muted-foreground text-xs">{resumo}</p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -398,7 +501,7 @@ export function TaskDialog(): React.JSX.Element {
               <X className="size-4" />
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || !form.title.trim()}>
+            <Button type="submit" disabled={saving || !form.title.trim() || semDiaMarcado}>
               {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Criar tarefa'}
             </Button>
           </DialogFooter>

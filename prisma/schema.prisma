@@ -67,6 +67,7 @@ model Task {
   completedAt         DateTime? @map("completed_at") @db.Timestamptz(6)
   recurrence          String    @default("none")
   recurrenceInterval  Int       @default(1) @map("recurrence_interval")
+  recurrenceWeekdays  String    @default("") @map("recurrence_weekdays")
   recurrenceUntil     DateTime? @map("recurrence_until") @db.Timestamptz(6)
   parentTaskId        String?   @map("parent_task_id")
   createdAt           DateTime  @map("created_at") @db.Timestamptz(6)
