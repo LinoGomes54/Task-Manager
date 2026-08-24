@@ -93,6 +93,18 @@ CREATE TABLE IF NOT EXISTS _sync_state (
   last_pulled_at TEXT
 );
 
+`
+
+/**
+ * Indices, separados do DDL das tabelas porque sao aplicados DEPOIS das migrations
+ * de coluna.
+ *
+ * Num banco que ja existia, o `CREATE TABLE IF NOT EXISTS` nao faz nada — a tabela
+ * continua sem as colunas novas. Um indice sobre uma dessas colunas criado no mesmo
+ * bloco falharia com "no such column", derrubando a abertura do app justamente em
+ * quem ja usava a versao anterior.
+ */
+export const LOCAL_INDEXES_SQL = /* sql */ `
 CREATE INDEX IF NOT EXISTS idx_tasks_user      ON tasks (user_id, deleted_at);
 CREATE INDEX IF NOT EXISTS idx_tasks_due       ON tasks (user_id, due_at);
 CREATE INDEX IF NOT EXISTS idx_tasks_dirty     ON tasks (dirty);

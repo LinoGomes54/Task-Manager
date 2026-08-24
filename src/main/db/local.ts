@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import { join } from 'node:path'
 import { app } from 'electron'
-import { LOCAL_SCHEMA_SQL } from './schema'
+import { LOCAL_INDEXES_SQL, LOCAL_SCHEMA_SQL } from './schema'
 
 /**
  * Cache local em SQLite, usando o modulo `node:sqlite` embutido no Node 24 que
@@ -24,8 +24,11 @@ export function initLocalDb(): DatabaseSync {
 
   const file = join(app.getPath('userData'), 'task-manager.db')
   db = new DatabaseSync(file)
+  // Ordem obrigatoria: tabelas, depois colunas novas, depois indices. Os indices
+  // podem citar colunas que so a migration adiciona num banco antigo.
   db.exec(LOCAL_SCHEMA_SQL)
   runLocalMigrations(db)
+  db.exec(LOCAL_INDEXES_SQL)
   return db
 }
 
