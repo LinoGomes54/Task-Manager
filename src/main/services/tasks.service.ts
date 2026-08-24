@@ -9,6 +9,7 @@ import type {
   DashboardStats,
   TaskPriority,
   TaskStatus,
+  TaskKind,
   RecurrenceRule
 } from '@shared/types'
 
@@ -47,6 +48,7 @@ function mapTask(row: Row): Task {
     recurrenceWeekdays: parseWeekdays(row.recurrence_weekdays),
     recurrenceUntil: row.recurrence_until === null ? null : String(row.recurrence_until),
     parentTaskId: row.parent_task_id === null ? null : String(row.parent_task_id),
+    kind: String(row.kind) as TaskKind,
     durationMinutes: Number(row.duration_minutes),
     agendaDate: row.agenda_date === null ? null : String(row.agenda_date),
     agendaPosition: Number(row.agenda_position),
@@ -85,6 +87,10 @@ export function listTasks(userId: string, filters: TaskFilters = {}): Task[] {
   if (filters.recurrence) {
     where.push('recurrence = ?')
     params.push(filters.recurrence)
+  }
+  if (filters.kind) {
+    where.push('kind = ?')
+    params.push(filters.kind)
   }
   if (filters.from) {
     where.push('due_at >= ?')
@@ -135,9 +141,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
-       recurrence_until, parent_task_id, duration_minutes, agenda_date, agenda_position,
-       created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, 1)`,
+       recurrence_until, parent_task_id, kind, duration_minutes, agenda_date,
+       agenda_position, created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 1)`,
     [
       id,
       userId,
@@ -153,6 +159,7 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
       input.recurrenceInterval ?? 1,
       serializeWeekdays(input.recurrenceWeekdays),
       input.recurrenceUntil ?? null,
+      input.kind ?? 'task',
       input.durationMinutes ?? 25,
       input.agendaDate ?? null,
       input.agendaPosition ?? 0,
@@ -177,6 +184,7 @@ const UPDATABLE = {
   recurrenceInterval: 'recurrence_interval',
   recurrenceWeekdays: 'recurrence_weekdays',
   recurrenceUntil: 'recurrence_until',
+  kind: 'kind',
   durationMinutes: 'duration_minutes',
   agendaDate: 'agenda_date',
   agendaPosition: 'agenda_position'
@@ -339,9 +347,9 @@ function createNextOccurrence(userId: string, task: Task): void {
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
-       recurrence_until, parent_task_id, duration_minutes, agenda_date, agenda_position,
-       created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
+       recurrence_until, parent_task_id, kind, duration_minutes, agenda_date,
+       agenda_position, created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
     [
       newId(),
       userId,
@@ -357,6 +365,7 @@ function createNextOccurrence(userId: string, task: Task): void {
       serializeWeekdays(task.recurrenceWeekdays),
       task.recurrenceUntil,
       task.parentTaskId ?? task.id,
+      task.kind,
       task.durationMinutes,
       timestamp,
       timestamp

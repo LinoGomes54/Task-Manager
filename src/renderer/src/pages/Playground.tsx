@@ -1,4 +1,4 @@
-import { Check, CircleDot, Clock, Coffee, Inbox, Plus } from 'lucide-react'
+import { Bell, Check, CircleDot, Clock, Coffee, Inbox, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { Panel } from '@/components/Panel'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { useCurrentTask } from '@/hooks/use-current-task'
-import { useToggleComplete } from '@/hooks/use-tasks'
+import { useToggleComplete, useTasks } from '@/hooks/use-tasks'
 import { useCategoryMap } from '@/hooks/use-categories'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 import {
@@ -18,6 +18,7 @@ import {
   gapsBetween,
   totalMinutes,
   hasOverlap,
+  dayRange,
   type TaskBlock
 } from '@shared/agenda'
 import { combineDateTime } from '@/lib/format'
@@ -33,6 +34,8 @@ import { cn } from '@/lib/utils'
  */
 export function PlaygroundPage(): React.JSX.Element {
   const { current, next, blocks, isLoading } = useCurrentTask()
+  const { from, to } = dayRange()
+  const { data: lembretes = [] } = useTasks({ from, to, kind: 'reminder' })
   const categories = useCategoryMap()
   const toggleComplete = useToggleComplete()
   const openNew = useTaskDialog((store) => store.openNew)
@@ -241,6 +244,91 @@ export function PlaygroundPage(): React.JSX.Element {
                     </span>
                   </div>
                 </div>
+              )
+            })}
+          </div>
+        </Panel>
+      </div>
+
+      {/*
+        Lembretes ficam numa faixa propria, fora da linha do dia: sao avisos
+        pontuais, e coloca-los na agenda faria "tomar remedio" reservar um bloco
+        de tempo que ele nao ocupa.
+      */}
+      <div className="mt-5">
+        <Panel
+          title="Lembretes de hoje"
+          meta={lembretes.length || undefined}
+          action={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 px-2 text-[11.5px]"
+              onClick={() =>
+                openNew({ kind: 'reminder', dueAt: combineDateTime(agora, formatHm(agora)) })
+              }
+            >
+              <Plus className="size-3.5" />
+              novo
+            </Button>
+          }
+        >
+          {lembretes.length === 0 && (
+            <p className="py-5 text-center text-[12px]" style={{ color: 'var(--faint)' }}>
+              Nenhum lembrete hoje. Use para avisos rápidos: tomar remédio, beber água,
+              alongar.
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {lembretes.map((lembrete) => {
+              const categoria = lembrete.categoryId
+                ? categories.get(lembrete.categoryId)
+                : undefined
+              const feito = lembrete.status === 'done'
+              const hora = lembrete.dueAt ? formatHm(new Date(lembrete.dueAt)) : null
+              const passou = lembrete.dueAt
+                ? new Date(lembrete.dueAt).getTime() < agora.getTime()
+                : false
+
+              return (
+                <button
+                  key={lembrete.id}
+                  type="button"
+                  onClick={() => toggleComplete.mutate(lembrete.id)}
+                  title={feito ? 'Marcar como não feito' : 'Marcar como feito'}
+                  className={cn(
+                    'flex items-center gap-2 rounded-full border py-1.5 pr-3 pl-2.5 transition-colors',
+                    feito
+                      ? 'opacity-45'
+                      : passou
+                        ? 'border-[color:var(--accent-base)]'
+                        : 'hover:border-ring/40'
+                  )}
+                >
+                  {categoria ? (
+                    <CategoryIcon
+                      icon={categoria.icon}
+                      color={categoria.color}
+                      variant="plain"
+                      className="size-3.5 shrink-0"
+                    />
+                  ) : (
+                    <Bell className="size-3.5 shrink-0" style={{ color: 'var(--faint)' }} />
+                  )}
+
+                  <span className={cn('text-[12.5px]', feito && 'line-through')}>
+                    {lembrete.title}
+                  </span>
+
+                  {hora && (
+                    <span className="font-mono text-[11px]" style={{ color: 'var(--faint)' }}>
+                      {hora}
+                    </span>
+                  )}
+
+                  {feito && <Check className="size-3.5 shrink-0" />}
+                </button>
               )
             })}
           </div>

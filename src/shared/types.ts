@@ -9,6 +9,13 @@ export type RecurrenceRule = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
 export type ThemePreference = 'light' | 'dark' | 'system'
 export type DensityPreference = 'compacto' | 'espacoso'
 
+/**
+ * `task`     — algo que ocupa tempo e entra na agenda do dia.
+ * `reminder` — um aviso pontual (tomar remedio, beber agua): so notifica, nao
+ *              ocupa bloco na linha do dia nem conta como tempo planejado.
+ */
+export type TaskKind = 'task' | 'reminder'
+
 export interface User {
   id: string
   name: string
@@ -48,6 +55,7 @@ export interface Task {
   recurrenceWeekdays: number[]
   recurrenceUntil: string | null
   parentTaskId: string | null
+  kind: TaskKind
   /** Quanto tempo a tarefa ocupa na agenda do dia, em minutos. */
   durationMinutes: number
   /**
@@ -103,6 +111,7 @@ export interface CreateTaskInput {
   recurrenceInterval?: number
   recurrenceWeekdays?: number[]
   recurrenceUntil?: string | null
+  kind?: TaskKind
   durationMinutes?: number
   agendaDate?: string | null
   agendaPosition?: number
@@ -119,6 +128,8 @@ export interface TaskFilters {
   onlyRecurring?: boolean
   /** Filtra por uma regra de repeticao especifica (abas Diariamente/Semanalmente/Mensalmente). */
   recurrence?: RecurrenceRule
+  /** Separa tarefas de lembretes. Sem isso, vem os dois. */
+  kind?: TaskKind
   /** ISO date (inclusive) — filtra por `dueAt`. */
   from?: string
   /** ISO date (inclusive) — filtra por `dueAt`. */

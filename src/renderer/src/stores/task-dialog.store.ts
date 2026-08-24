@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { RecurrenceRule, Task } from '@shared/types'
+import type { RecurrenceRule, Task, TaskKind } from '@shared/types'
 
 /**
  * Controla o dialogo de criar/editar tarefa.
@@ -19,6 +19,7 @@ interface TaskDialogStore {
     categoryId?: string
     isImportant?: boolean
     recurrence?: RecurrenceRule
+    kind?: TaskKind
   } | null
   openNew: (defaults?: TaskDialogStore['defaults']) => void
   openEdit: (task: Task) => void

@@ -22,7 +22,7 @@ export function useCurrentTask(): {
   isLoading: boolean
 } {
   const { from, to } = dayRange()
-  const { data: tasks, isLoading } = useTasks({ from, to })
+  const { data: tasks, isLoading } = useTasks({ from, to, kind: 'task' })
   const [, tick] = useState(0)
 
   useEffect(() => {

@@ -48,7 +48,13 @@ import { useSettings } from '@/hooks/use-settings'
 
 /** Duracoes sugeridas: um pomodoro, meio, dois e uma hora. */
 const DURATION_PRESETS = [15, 25, 50, 60]
-import type { CreateTaskInput, RecurrenceRule, TaskPriority, TaskStatus } from '@shared/types'
+import type {
+  CreateTaskInput,
+  RecurrenceRule,
+  TaskKind,
+  TaskPriority,
+  TaskStatus
+} from '@shared/types'
 
 /** Formulario unico de criar e editar tarefa. */
 
@@ -70,6 +76,7 @@ interface FormState {
   monthDay: number
   /** Quanto tempo a tarefa ocupa, em minutos. */
   durationMinutes: number
+  kind: TaskKind
 }
 
 const NO_CATEGORY = '__none__'
@@ -89,7 +96,8 @@ const EMPTY: FormState = {
   recurrenceInterval: 1,
   recurrenceWeekdays: [],
   monthDay: new Date().getDate(),
-  durationMinutes: 25
+  durationMinutes: 25,
+  kind: 'task'
 }
 
 export function TaskDialog(): React.JSX.Element {
@@ -123,7 +131,8 @@ export function TaskDialog(): React.JSX.Element {
         recurrenceInterval: editing.recurrenceInterval,
         recurrenceWeekdays: editing.recurrenceWeekdays,
         monthDay: editing.dueAt ? parseISO(editing.dueAt).getDate() : new Date().getDate(),
-        durationMinutes: editing.durationMinutes
+        durationMinutes: editing.durationMinutes,
+        kind: editing.kind
       })
       return
     }
@@ -143,7 +152,8 @@ export function TaskDialog(): React.JSX.Element {
       dueTime: defaults?.dueAt ? extractTime(defaults.dueAt) : '09:00',
       // Uma semanal sem dia marcado nao teria quando acontecer: sugerimos hoje.
       recurrenceWeekdays: suggestedRecurrence === 'weekly' ? [new Date().getDay()] : [],
-      durationMinutes: settings?.pomodoroMinutes ?? 25
+      durationMinutes: settings?.pomodoroMinutes ?? 25,
+      kind: defaults?.kind ?? 'task'
     })
   }, [open, editing, defaults])
 
@@ -180,7 +190,8 @@ export function TaskDialog(): React.JSX.Element {
       recurrence: form.recurrence,
       recurrenceInterval: Math.max(1, form.recurrenceInterval),
       recurrenceWeekdays: form.recurrence === 'weekly' ? form.recurrenceWeekdays : [],
-      durationMinutes: Math.max(1, form.durationMinutes)
+      durationMinutes: Math.max(1, form.durationMinutes),
+      kind: form.kind
     }
   }
 
@@ -233,6 +244,37 @@ export function TaskDialog(): React.JSX.Element {
           </DialogHeader>
 
           <div className="-mx-1 grid min-h-0 flex-1 gap-4 overflow-y-auto px-1 py-4">
+            {/*
+              Tarefa x lembrete: um lembrete e um aviso pontual (tomar remedio,
+              beber agua). Ele notifica mas nao ocupa bloco na agenda — sem essa
+              distincao, "tomar remedio" reservaria 25 minutos do dia.
+            */}
+            <div className="bg-muted/60 grid grid-cols-2 gap-1 rounded-lg p-1">
+              {(
+                [
+                  { value: 'task', label: 'Tarefa', hint: 'ocupa tempo' },
+                  { value: 'reminder', label: 'Lembrete', hint: 'só avisa' }
+                ] as const
+              ).map((opcao) => (
+                <button
+                  key={opcao.value}
+                  type="button"
+                  onClick={() => update('kind', opcao.value)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-[12.5px] transition-colors',
+                    form.kind === opcao.value
+                      ? 'bg-card font-semibold shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {opcao.label}
+                  <span className="ml-1.5 text-[11px] font-normal opacity-60">
+                    {opcao.hint}
+                  </span>
+                </button>
+              ))}
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="title">Título</Label>
               <Input
@@ -498,7 +540,7 @@ export function TaskDialog(): React.JSX.Element {
                     </div>
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className={cn('grid gap-2', form.kind === 'reminder' && 'hidden')}>
                     <div className="flex items-baseline justify-between">
                       <Label htmlFor="duration">Duração</Label>
                       {termina && (

@@ -46,9 +46,11 @@ export function useTodayTasks(): {
   const end = new Date()
   end.setHours(23, 59, 59, 999)
 
-  const todayQuery = useTasks({ from: start.toISOString(), to: end.toISOString() })
-  const overdueQuery = useTasks({ dueScope: 'overdue' })
-  const noDueQuery = useTasks({ dueScope: 'no_due', status: 'pending' })
+  // `kind: 'task'` mantem os lembretes fora: eles tem faixa propria no
+  // Playground, e misturados aqui inflariam a contagem do dia.
+  const todayQuery = useTasks({ from: start.toISOString(), to: end.toISOString(), kind: 'task' })
+  const overdueQuery = useTasks({ dueScope: 'overdue', kind: 'task' })
+  const noDueQuery = useTasks({ dueScope: 'no_due', status: 'pending', kind: 'task' })
 
   const today = todayQuery.data ?? []
   const overdue = overdueQuery.data ?? []
