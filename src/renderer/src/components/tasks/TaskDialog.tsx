@@ -43,6 +43,11 @@ import {
   describeSchedule
 } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
+import { formatHm, formatDuration } from '@shared/agenda'
+import { useSettings } from '@/hooks/use-settings'
+
+/** Duracoes sugeridas: um pomodoro, meio, dois e uma hora. */
+const DURATION_PRESETS = [15, 25, 50, 60]
 import type { CreateTaskInput, RecurrenceRule, TaskPriority, TaskStatus } from '@shared/types'
 
 /** Formulario unico de criar e editar tarefa. */
@@ -63,6 +68,8 @@ interface FormState {
   recurrenceWeekdays: number[]
   /** Dia do mes de uma repeticao mensal. */
   monthDay: number
+  /** Quanto tempo a tarefa ocupa, em minutos. */
+  durationMinutes: number
 }
 
 const NO_CATEGORY = '__none__'
@@ -81,12 +88,14 @@ const EMPTY: FormState = {
   recurrence: 'none',
   recurrenceInterval: 1,
   recurrenceWeekdays: [],
-  monthDay: new Date().getDate()
+  monthDay: new Date().getDate(),
+  durationMinutes: 25
 }
 
 export function TaskDialog(): React.JSX.Element {
   const { open, editing, defaults, close } = useTaskDialog()
   const { data: categories = [] } = useCategories()
+  const { data: settings } = useSettings()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
 
@@ -113,7 +122,8 @@ export function TaskDialog(): React.JSX.Element {
         recurrence: editing.recurrence,
         recurrenceInterval: editing.recurrenceInterval,
         recurrenceWeekdays: editing.recurrenceWeekdays,
-        monthDay: editing.dueAt ? parseISO(editing.dueAt).getDate() : new Date().getDate()
+        monthDay: editing.dueAt ? parseISO(editing.dueAt).getDate() : new Date().getDate(),
+        durationMinutes: editing.durationMinutes
       })
       return
     }
@@ -132,7 +142,8 @@ export function TaskDialog(): React.JSX.Element {
       dueDate: defaults?.dueAt ? parseISO(defaults.dueAt) : needsDueDate ? new Date() : undefined,
       dueTime: defaults?.dueAt ? extractTime(defaults.dueAt) : '09:00',
       // Uma semanal sem dia marcado nao teria quando acontecer: sugerimos hoje.
-      recurrenceWeekdays: suggestedRecurrence === 'weekly' ? [new Date().getDay()] : []
+      recurrenceWeekdays: suggestedRecurrence === 'weekly' ? [new Date().getDay()] : [],
+      durationMinutes: settings?.pomodoroMinutes ?? 25
     })
   }, [open, editing, defaults])
 
@@ -145,8 +156,8 @@ export function TaskDialog(): React.JSX.Element {
     // so a tarefa avulsa (e a anual) usa a data escolhida na mao.
     const dueAt =
       form.recurrence === 'none'
-        ? form.hasDueDate && form.dueDate
-          ? combineDateTime(form.dueDate, form.dueTime)
+        ? form.hasDueDate
+          ? combineDateTime(form.dueDate ?? new Date(), form.dueTime)
           : null
         : (editing?.dueAt ??
           firstOccurrence({
@@ -168,7 +179,8 @@ export function TaskDialog(): React.JSX.Element {
       remindMinutesBefore: form.remindMinutesBefore,
       recurrence: form.recurrence,
       recurrenceInterval: Math.max(1, form.recurrenceInterval),
-      recurrenceWeekdays: form.recurrence === 'weekly' ? form.recurrenceWeekdays : []
+      recurrenceWeekdays: form.recurrence === 'weekly' ? form.recurrenceWeekdays : [],
+      durationMinutes: Math.max(1, form.durationMinutes)
     }
   }
 
@@ -195,6 +207,17 @@ export function TaskDialog(): React.JSX.Element {
 
   // Uma semanal sem nenhum dia marcado nao tem quando acontecer.
   const semDiaMarcado = form.recurrence === 'weekly' && form.recurrenceWeekdays.length === 0
+
+  // Horario de termino, mostrado ao lado da duracao: e o que responde na hora
+  // "se comeco as 14h e levo uma hora, quando acaba?".
+  const termina = (() => {
+    const [h, m] = form.dueTime.split(':').map(Number)
+    if (Number.isNaN(h)) return null
+    const fim = new Date()
+    fim.setHours(h, m || 0, 0, 0)
+    fim.setMinutes(fim.getMinutes() + Math.max(1, form.durationMinutes))
+    return formatHm(fim)
+  })()
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
@@ -372,7 +395,13 @@ export function TaskDialog(): React.JSX.Element {
                   <Switch
                     id="has-due"
                     checked={form.hasDueDate}
-                    onCheckedChange={(value) => update('hasDueDate', value)}
+                    onCheckedChange={(value) => {
+                      // Ligar o prazo ja assume hoje: sem isso, quem preenchia
+                      // so o horario salvava a tarefa sem prazo nenhum, e ela
+                      // sumia da agenda e do calendario sem explicacao.
+                      if (value && !form.dueDate) update('dueDate', new Date())
+                      update('hasDueDate', value)
+                    }}
                   />
                 </div>
               ) : (
@@ -466,6 +495,50 @@ export function TaskDialog(): React.JSX.Element {
                         value={form.dueTime}
                         onChange={(event) => update('dueTime', event.target.value)}
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex items-baseline justify-between">
+                      <Label htmlFor="duration">Duração</Label>
+                      {termina && (
+                        <span className="text-muted-foreground text-xs">
+                          termina às <span className="font-mono">{termina}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {DURATION_PRESETS.map((minutos) => (
+                        <button
+                          key={minutos}
+                          type="button"
+                          onClick={() => update('durationMinutes', minutos)}
+                          className={cn(
+                            'rounded-full border px-3 py-1 text-[12px] transition-colors',
+                            form.durationMinutes === minutos
+                              ? 'border-[color:var(--accent-base)] bg-accent'
+                              : 'hover:bg-accent/60 border-border text-muted-foreground'
+                          )}
+                        >
+                          {formatDuration(minutos)}
+                        </button>
+                      ))}
+
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          id="duration"
+                          type="number"
+                          min={1}
+                          max={600}
+                          className="w-20"
+                          value={form.durationMinutes}
+                          onChange={(event) =>
+                            update('durationMinutes', Number(event.target.value))
+                          }
+                        />
+                        <span className="text-muted-foreground text-xs">min</span>
+                      </div>
                     </div>
                   </div>
 

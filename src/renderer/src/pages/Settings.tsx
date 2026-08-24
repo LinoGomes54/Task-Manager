@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { Power, Bell, Palette, Cloud, RefreshCw, Info, Repeat } from 'lucide-react'
+import { Power, Bell, Palette, Cloud, RefreshCw, Info, Repeat, Timer } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -179,6 +180,63 @@ export function SettingsPage(): React.JSX.Element {
               checked={settings.lockFutureRecurring}
               onChange={(value) => patch({ lockFutureRecurring: value })}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Timer className="size-4" />
+              Agenda do dia
+            </CardTitle>
+            <CardDescription>
+              Valores sugeridos ao criar uma tarefa. Cada tarefa pode ter a própria duração.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="pomodoro">Duração padrão</Label>
+                <p className="text-muted-foreground text-xs">
+                  Quanto tempo uma tarefa nova ocupa por padrão.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id="pomodoro"
+                  type="number"
+                  min={1}
+                  max={600}
+                  className="w-24"
+                  value={settings.pomodoroMinutes}
+                  onChange={(event) => patch({ pomodoroMinutes: Number(event.target.value) })}
+                />
+                <span className="text-muted-foreground text-xs">min</span>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="break">Descanso entre tarefas</Label>
+                <p className="text-muted-foreground text-xs">
+                  Folga sugerida ao encaixar a próxima tarefa na sequência.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id="break"
+                  type="number"
+                  min={0}
+                  max={120}
+                  className="w-24"
+                  value={settings.breakMinutes}
+                  onChange={(event) => patch({ breakMinutes: Number(event.target.value) })}
+                />
+                <span className="text-muted-foreground text-xs">min</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

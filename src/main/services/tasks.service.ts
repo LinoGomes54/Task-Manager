@@ -1,4 +1,4 @@
-import { queryAll, queryOne, execute, now, newId, toBool } from '../db/local'
+import { queryAll, queryOne, execute, transaction, now, newId, toBool } from '../db/local'
 import { getSettings } from './settings.service'
 import { isFutureRecurrence, FUTURE_RECURRENCE_MESSAGE } from '@shared/task-rules'
 import type {
@@ -47,6 +47,9 @@ function mapTask(row: Row): Task {
     recurrenceWeekdays: parseWeekdays(row.recurrence_weekdays),
     recurrenceUntil: row.recurrence_until === null ? null : String(row.recurrence_until),
     parentTaskId: row.parent_task_id === null ? null : String(row.parent_task_id),
+    durationMinutes: Number(row.duration_minutes),
+    agendaDate: row.agenda_date === null ? null : String(row.agenda_date),
+    agendaPosition: Number(row.agenda_position),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
   }
@@ -132,8 +135,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
-       recurrence_until, parent_task_id, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 1)`,
+       recurrence_until, parent_task_id, duration_minutes, agenda_date, agenda_position,
+       created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, 1)`,
     [
       id,
       userId,
@@ -149,6 +153,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
       input.recurrenceInterval ?? 1,
       serializeWeekdays(input.recurrenceWeekdays),
       input.recurrenceUntil ?? null,
+      input.durationMinutes ?? 25,
+      input.agendaDate ?? null,
+      input.agendaPosition ?? 0,
       timestamp,
       timestamp
     ]
@@ -169,7 +176,10 @@ const UPDATABLE = {
   recurrence: 'recurrence',
   recurrenceInterval: 'recurrence_interval',
   recurrenceWeekdays: 'recurrence_weekdays',
-  recurrenceUntil: 'recurrence_until'
+  recurrenceUntil: 'recurrence_until',
+  durationMinutes: 'duration_minutes',
+  agendaDate: 'agenda_date',
+  agendaPosition: 'agenda_position'
 } as const
 
 export function updateTask(userId: string, input: UpdateTaskInput): Task {
@@ -329,8 +339,9 @@ function createNextOccurrence(userId: string, task: Task): void {
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
-       recurrence_until, parent_task_id, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       recurrence_until, parent_task_id, duration_minutes, agenda_date, agenda_position,
+       created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
     [
       newId(),
       userId,
@@ -346,6 +357,7 @@ function createNextOccurrence(userId: string, task: Task): void {
       serializeWeekdays(task.recurrenceWeekdays),
       task.recurrenceUntil,
       task.parentTaskId ?? task.id,
+      task.durationMinutes,
       timestamp,
       timestamp
     ]
@@ -457,4 +469,92 @@ export function markNotified(userId: string, id: string): void {
     'UPDATE tasks SET notified_at = ?, updated_at = ?, dirty = 1 WHERE id = ? AND user_id = ?',
     [timestamp, timestamp, id, userId]
   )
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Agenda do dia                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tarefas planejadas para um dia, na ordem em que serao feitas.
+ *
+ * Os horarios nao saem daqui: sao calculados a partir desta ordem em
+ * `shared/agenda.ts`. Guardar horario por linha obrigaria a reescrever a agenda
+ * inteira a cada reordenacao.
+ */
+export function listAgenda(userId: string, date: string): Task[] {
+  return queryAll<Row>(
+    `SELECT * FROM tasks
+     WHERE user_id = ? AND deleted_at IS NULL AND agenda_date = ?
+     ORDER BY agenda_position ASC, created_at ASC`,
+    [userId, date]
+  ).map(mapTask)
+}
+
+/** Coloca a tarefa no fim da agenda do dia. */
+export function addToAgenda(userId: string, taskId: string, date: string): Task {
+  const ultimo = queryOne<{ pos: number | null }>(
+    `SELECT MAX(agenda_position) AS pos FROM tasks
+     WHERE user_id = ? AND deleted_at IS NULL AND agenda_date = ?`,
+    [userId, date]
+  )
+  const proxima = (ultimo?.pos ?? -1) + 1
+  const timestamp = now()
+
+  execute(
+    `UPDATE tasks SET agenda_date = ?, agenda_position = ?, updated_at = ?, dirty = 1
+     WHERE id = ? AND user_id = ?`,
+    [date, proxima, timestamp, taskId, userId]
+  )
+  return getTask(userId, taskId)!
+}
+
+export function removeFromAgenda(userId: string, taskId: string): Task {
+  const timestamp = now()
+  execute(
+    `UPDATE tasks SET agenda_date = NULL, agenda_position = 0, updated_at = ?, dirty = 1
+     WHERE id = ? AND user_id = ?`,
+    [timestamp, taskId, userId]
+  )
+  return getTask(userId, taskId)!
+}
+
+/**
+ * Move uma tarefa para outra posicao e renumera a agenda inteira.
+ *
+ * A renumeracao completa evita buracos e empates de posicao, que fariam a ordem
+ * depender do desempate por `created_at` e mudar sozinha.
+ */
+export function reorderAgenda(userId: string, date: string, taskId: string, para: number): Task[] {
+  const atual = listAgenda(userId, date)
+  const de = atual.findIndex((t) => t.id === taskId)
+  if (de === -1) return atual
+
+  const destino = Math.max(0, Math.min(para, atual.length - 1))
+  const [movida] = atual.splice(de, 1)
+  atual.splice(destino, 0, movida)
+
+  const timestamp = now()
+  transaction(() => {
+    atual.forEach((task, index) => {
+      execute(
+        `UPDATE tasks SET agenda_position = ?, updated_at = ?, dirty = 1
+         WHERE id = ? AND user_id = ?`,
+        [index, timestamp, task.id, userId]
+      )
+    })
+  })
+
+  return listAgenda(userId, date)
+}
+
+/** Ajusta quanto tempo a tarefa ocupa na agenda. */
+export function setDuration(userId: string, taskId: string, minutes: number): Task {
+  const minutos = Math.max(1, Math.min(600, Math.round(minutes)))
+  execute(
+    'UPDATE tasks SET duration_minutes = ?, updated_at = ?, dirty = 1 WHERE id = ? AND user_id = ?',
+    [minutos, now(), taskId, userId]
+  )
+  return getTask(userId, taskId)!
 }

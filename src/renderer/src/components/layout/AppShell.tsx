@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { AppSidebar } from './AppSidebar'
 import { SyncIndicator } from './SyncIndicator'
-import { TimerIndicator } from './TimerIndicator'
+import { CurrentTaskIndicator } from './CurrentTaskIndicator'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 
 /**
@@ -40,7 +40,7 @@ function Topbar(): React.JSX.Element {
 
       <div className="flex-1" />
 
-      <TimerIndicator />
+      <CurrentTaskIndicator />
       <SyncIndicator />
 
       <Button size="sm" className="gap-1.5" onClick={() => openNewTask()}>

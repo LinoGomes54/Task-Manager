@@ -56,6 +56,9 @@ CREATE TABLE IF NOT EXISTS tasks (
   recurrence_weekdays   TEXT NOT NULL DEFAULT '',
   recurrence_until      TEXT,
   parent_task_id        TEXT,
+  duration_minutes      INTEGER NOT NULL DEFAULT 25,
+  agenda_date           TEXT,
+  agenda_position       INTEGER NOT NULL DEFAULT 0,
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   deleted_at            TEXT,
@@ -74,6 +77,9 @@ CREATE TABLE IF NOT EXISTS user_settings (
   theme                 TEXT NOT NULL DEFAULT 'system',
   density               TEXT NOT NULL DEFAULT 'espacoso',
   accent_color          TEXT NOT NULL DEFAULT '#5b5bd6',
+  pomodoro_minutes      INTEGER NOT NULL DEFAULT 25,
+  break_minutes         INTEGER NOT NULL DEFAULT 5,
+  agenda_start_time     TEXT NOT NULL DEFAULT '09:00',
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   deleted_at            TEXT,
@@ -89,6 +95,7 @@ CREATE TABLE IF NOT EXISTS _sync_state (
 CREATE INDEX IF NOT EXISTS idx_tasks_user      ON tasks (user_id, deleted_at);
 CREATE INDEX IF NOT EXISTS idx_tasks_due       ON tasks (user_id, due_at);
 CREATE INDEX IF NOT EXISTS idx_tasks_dirty     ON tasks (dirty);
+CREATE INDEX IF NOT EXISTS idx_tasks_agenda    ON tasks (user_id, agenda_date, agenda_position);
 CREATE INDEX IF NOT EXISTS idx_categories_user ON categories (user_id, deleted_at);
 CREATE INDEX IF NOT EXISTS idx_users_email     ON users (email);
 `
@@ -136,6 +143,9 @@ export const SYNC_COLUMNS: Record<SyncTable, string[]> = {
     'recurrence_weekdays',
     'recurrence_until',
     'parent_task_id',
+    'duration_minutes',
+    'agenda_date',
+    'agenda_position',
     'created_at',
     'updated_at',
     'deleted_at'
@@ -152,6 +162,9 @@ export const SYNC_COLUMNS: Record<SyncTable, string[]> = {
     'theme',
     'density',
     'accent_color',
+    'pomodoro_minutes',
+    'break_minutes',
+    'agenda_start_time',
     'created_at',
     'updated_at',
     'deleted_at'

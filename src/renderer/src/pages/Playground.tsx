@@ -1,237 +1,246 @@
-import { useEffect, useRef } from 'react'
-import { Play, Pause, RotateCcw, Check, Target, Inbox } from 'lucide-react'
-import { toast } from 'sonner'
+import { Check, CircleDot, Clock, Coffee, Inbox, Plus } from 'lucide-react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/PageHeader'
 import { Panel } from '@/components/Panel'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
-import { useTodayTasks, useToggleComplete } from '@/hooks/use-tasks'
+import { useCurrentTask } from '@/hooks/use-current-task'
+import { useToggleComplete } from '@/hooks/use-tasks'
 import { useCategoryMap } from '@/hooks/use-categories'
-import { useSettings } from '@/hooks/use-settings'
-import { useTimerTick } from '@/hooks/use-timer-tick'
-import { useTimer, PRESETS, formatClock } from '@/stores/timer.store'
-import { playAlarmSound } from '@/lib/alarm'
+import { useTaskDialog } from '@/stores/task-dialog.store'
+import {
+  formatHm,
+  formatDuration,
+  minutesLeft,
+  progressOf,
+  gapsBetween,
+  totalMinutes,
+  hasOverlap,
+  type TaskBlock
+} from '@shared/agenda'
+import { combineDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /**
- * Playground: uma sessao de foco cronometrada sobre uma tarefa.
+ * Playground: a agenda do dia.
  *
- * O relogio conta **para tras** a partir do alvo escolhido, porque o que importa
- * durante a sessao e quanto falta, nao quanto ja passou. O tempo decorrido fica
- * na legenda, para quem quiser conferir.
+ * **Nao cronometra nada.** O que manda e o relogio: a tarefa em andamento e
+ * aquela cujo horario ja comecou e ainda nao terminou. Um cronometro manual
+ * exigiria lembrar de apertar play, e a agenda deixaria de refletir o dia real
+ * no instante em que alguem esquecesse.
  */
 export function PlaygroundPage(): React.JSX.Element {
-  const elapsed = useTimerTick()
-  const { taskId, targetMinutes, startedAt, sessions, loggedSeconds } = useTimer()
-  const { toggle, reset, finish, selectTask, setTarget } = useTimer()
-
-  const { today, overdue, noDueDate, isLoading } = useTodayTasks()
+  const { current, next, blocks, isLoading } = useCurrentTask()
   const categories = useCategoryMap()
-  const { data: settings } = useSettings()
   const toggleComplete = useToggleComplete()
+  const openNew = useTaskDialog((store) => store.openNew)
 
-  const fila = [...overdue, ...today, ...noDueDate].filter((t) => t.status !== 'done')
-  const emFoco = fila.find((t) => t.id === taskId) ?? null
+  const agora = new Date()
+  const gaps = gapsBetween(blocks)
+  const minutosPlanejados = totalMinutes(blocks)
+  const sobreposto = hasOverlap(blocks)
 
-  const totalSeconds = targetMinutes * 60
-  const restante = Math.max(0, totalSeconds - elapsed)
-  const progresso = Math.min(100, (elapsed / totalSeconds) * 100)
-  const rodando = startedAt !== null
-  const completou = elapsed >= totalSeconds
-
-  // Avisa uma unica vez quando o alvo e atingido. O `useRef` evita que o toast
-  // se repita a cada pulso do cronometro depois que o tempo estoura.
-  const avisou = useRef(false)
-  useEffect(() => {
-    if (!completou) {
-      avisou.current = false
-      return
-    }
-    if (avisou.current) return
-    avisou.current = true
-
-    if (settings?.soundEnabled ?? true) playAlarmSound()
-    toast.success(`Sessão de ${targetMinutes} min concluída!`, { duration: 8000 })
-  }, [completou, targetMinutes, settings?.soundEnabled])
-
-  function handleFinish(): void {
-    const segundos = finish()
-
-    if (emFoco) {
-      toggleComplete.mutate(emFoco.id)
-      selectTask(null)
-    }
-
-    if (segundos >= 60) {
-      toast.success(`${formatClock(segundos)} de foco registrados`)
-    }
-  }
+  const gapAntesDe = (block: TaskBlock): number =>
+    gaps.find((g) => g.end.getTime() === block.start.getTime())?.minutes ?? 0
 
   return (
     <>
       <PageHeader
         title="Playground"
-        description="Uma tarefa por vez, com o cronômetro correndo."
+        description={format(agora, "EEEE, d 'de' MMMM", { locale: ptBR })}
         stats={
-          sessions > 0
-            ? `${formatClock(loggedSeconds)} focados · ${sessions} ${sessions === 1 ? 'sessão' : 'sessões'}`
+          blocks.length > 0
+            ? `${blocks.length} ${blocks.length === 1 ? 'tarefa' : 'tarefas'} · ${formatDuration(minutosPlanejados)} planejados`
             : undefined
+        }
+        action={
+          <Button
+            onClick={() => openNew({ dueAt: combineDateTime(agora, formatHm(agora)) })}
+            className="gap-1.5"
+          >
+            <Plus className="size-4" />
+            Nova tarefa
+          </Button>
         }
       />
 
-      <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(300px,440px)]">
-        <Panel title="Foco" meta={emFoco ? undefined : 'sessão livre'}>
-          <div className="flex flex-col items-center py-4">
-            <p
-              className="mb-5 max-w-sm text-center text-[13px] font-medium"
-              style={emFoco ? undefined : { color: 'var(--faint)' }}
-            >
-              {emFoco ? emFoco.title : 'Escolha uma tarefa na fila ao lado'}
-            </p>
+      <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
+        <Panel title="Agora" meta={current ? formatHm(agora) : undefined}>
+          {isLoading && <Skeleton className="h-40 w-full rounded-xl" />}
 
-            {/* Anel de progresso com conic-gradient, como no design. */}
-            <div
-              className="flex size-[210px] items-center justify-center rounded-full transition-all"
-              style={{
-                background: `conic-gradient(var(--accent-base) ${progresso}%, var(--border) 0)`
-              }}
-            >
-              <div className="bg-card flex size-[186px] flex-col items-center justify-center rounded-full">
-                <p
-                  className={cn(
-                    'text-[38px] leading-none font-semibold tabular-nums',
-                    completou && 'text-primary'
-                  )}
-                >
-                  {formatClock(restante)}
-                </p>
-                <p className="mt-2 text-[11px]" style={{ color: 'var(--faint)' }}>
-                  {rodando
-                    ? `em andamento · ${formatClock(elapsed)}`
-                    : elapsed > 0
-                      ? `pausado · ${formatClock(elapsed)}`
-                      : `sessão de ${targetMinutes} min`}
-                </p>
+          {!isLoading && !current && (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Coffee className="mb-2 size-7" style={{ color: 'var(--faint)' }} />
+              <p className="text-[13px] font-medium">Nada agendado para agora</p>
+              <p className="mt-1 max-w-sm text-[12px]" style={{ color: 'var(--faint)' }}>
+                {next
+                  ? `A próxima é “${next.task.title}”, às ${formatHm(next.start)}.`
+                  : 'Crie uma tarefa com horário e duração para ela aparecer aqui.'}
+              </p>
+            </div>
+          )}
+
+          {!isLoading && current && (
+            <div className="py-2">
+              <div className="mb-4 flex items-start gap-3">
+                {current.task.categoryId && categories.get(current.task.categoryId) ? (
+                  <CategoryIcon
+                    icon={categories.get(current.task.categoryId)!.icon}
+                    color={categories.get(current.task.categoryId)!.color}
+                  />
+                ) : (
+                  <span
+                    className="flex size-9 shrink-0 items-center justify-center rounded-lg border"
+                    style={{ color: 'var(--accent-base)' }}
+                  >
+                    <CircleDot className="size-4" />
+                  </span>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-[19px] leading-tight font-semibold">{current.task.title}</p>
+                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--faint)' }}>
+                    <span className="font-mono">{formatHm(current.start)}</span> às{' '}
+                    <span className="font-mono">{formatHm(current.end)}</span> ·{' '}
+                    {formatDuration(current.task.durationMinutes)}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-5 flex items-center gap-2">
-              {PRESETS.map((minutos) => (
-                <button
-                  key={minutos}
-                  type="button"
-                  onClick={() => setTarget(minutos)}
-                  className={cn(
-                    'rounded-full border px-3 py-[5px] text-[12px] transition-colors',
-                    targetMinutes === minutos
-                      ? 'border-[color:var(--accent-base)] bg-accent'
-                      : 'hover:bg-accent/60 border-border'
-                  )}
-                >
-                  {minutos} min
-                </button>
-              ))}
-            </div>
+              {current.task.description && (
+                <p className="mb-4 text-[13px]" style={{ color: 'var(--faint)' }}>
+                  {current.task.description}
+                </p>
+              )}
 
-            <div className="mt-5 flex items-center gap-2">
-              <Button
-                onClick={toggle}
-                className="gap-1.5 px-5"
-                variant={rodando ? 'destructive' : 'default'}
+              {/* Barra do tempo decorrido do bloco. */}
+              <div
+                className="mb-2 h-2 w-full overflow-hidden rounded-full"
+                style={{ backgroundColor: 'var(--border)' }}
               >
-                {rodando ? <Pause className="size-4" /> : <Play className="size-4" />}
-                {rodando ? 'Pausar' : elapsed > 0 ? 'Continuar' : 'Iniciar'}
-              </Button>
+                <div
+                  className="h-full rounded-full transition-[width] duration-1000"
+                  style={{
+                    width: `${progressOf(current)}%`,
+                    backgroundColor: 'var(--accent-base)'
+                  }}
+                />
+              </div>
+
+              <div className="mb-5 flex items-baseline justify-between text-[12px]">
+                <span style={{ color: 'var(--faint)' }}>
+                  faltam <span className="font-mono">{formatDuration(minutesLeft(current))}</span>
+                </span>
+                <span style={{ color: 'var(--faint)' }}>
+                  termina às <span className="font-mono">{formatHm(current.end)}</span>
+                </span>
+              </div>
 
               <Button
-                variant="outline"
-                size="icon"
-                onClick={reset}
-                disabled={elapsed === 0}
-                title="Zerar cronômetro"
-                aria-label="Zerar cronômetro"
-              >
-                <RotateCcw className="size-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="gap-1.5"
-                onClick={handleFinish}
-                disabled={elapsed === 0}
-                title={emFoco ? 'Concluir a tarefa e encerrar a sessão' : 'Encerrar a sessão'}
+                className="w-full gap-1.5"
+                onClick={() => toggleComplete.mutate(current.task.id)}
               >
                 <Check className="size-4" />
-                {emFoco ? 'Concluir' : 'Encerrar'}
+                Concluir
               </Button>
             </div>
-
-            {emFoco && (
-              <p className="mt-3 text-[11px]" style={{ color: 'var(--faint)' }}>
-                “Concluir” marca a tarefa como feita e registra o tempo.
-              </p>
-            )}
-          </div>
+          )}
         </Panel>
 
-        <Panel title="Fila do dia" meta={fila.length || undefined}>
+        <Panel title="Linha do dia" meta={blocks.length || undefined}>
           {isLoading && (
-            <p className="py-6 text-center text-[11.5px]" style={{ color: 'var(--faint)' }}>
-              Carregando…
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && blocks.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Inbox className="mb-2 size-7" style={{ color: 'var(--faint)' }} />
+              <p className="text-[12.5px] font-medium">Dia sem horários</p>
+              <p className="mt-1 max-w-xs text-[11.5px]" style={{ color: 'var(--faint)' }}>
+                Só tarefas com horário e duração entram na agenda.
+              </p>
+            </div>
+          )}
+
+          {sobreposto && (
+            <p className="text-destructive mb-3 text-[11.5px]">
+              Há tarefas com horários sobrepostos — duas coisas ao mesmo tempo.
             </p>
           )}
 
-          {!isLoading && fila.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Inbox className="mb-2 size-7" style={{ color: 'var(--faint)' }} />
-              <p className="text-[12.5px] font-medium">Nada na fila</p>
-              <p className="mt-1 max-w-xs text-[11.5px]" style={{ color: 'var(--faint)' }}>
-                Tarefas atrasadas, de hoje e sem prazo aparecem aqui.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            {fila.map((task) => {
-              const categoria = task.categoryId ? categories.get(task.categoryId) : undefined
-              const ativa = task.id === taskId
+          <div className="space-y-1">
+            {blocks.map((block) => {
+              const categoria = block.task.categoryId
+                ? categories.get(block.task.categoryId)
+                : undefined
+              const ehAgora = current?.task.id === block.task.id
+              const passou = block.end.getTime() < agora.getTime()
+              const concluida = block.task.status === 'done'
+              const folga = gapAntesDe(block)
 
               return (
-                <button
-                  key={task.id}
-                  type="button"
-                  onClick={() => selectTask(ativa ? null : task.id)}
-                  className={cn(
-                    'flex w-full items-center gap-2.5 rounded-[10px] border px-[11px] py-2 text-left transition-colors',
-                    ativa
-                      ? 'border-[color:var(--accent-base)] bg-accent'
-                      : 'hover:border-ring/40 bg-card'
-                  )}
-                >
-                  {categoria ? (
-                    <CategoryIcon
-                      icon={categoria.icon}
-                      color={categoria.color}
-                      variant="plain"
-                      className="size-3.5 shrink-0"
-                    />
-                  ) : (
-                    <Target className="size-3.5 shrink-0" style={{ color: 'var(--faint)' }} />
-                  )}
-
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">
-                    {task.title}
-                  </span>
-
-                  {ativa && (
-                    <span
-                      className="shrink-0 font-mono text-[10.5px]"
-                      style={{ color: 'var(--accent-base)' }}
+                <div key={block.task.id}>
+                  {folga > 0 && (
+                    <p
+                      className="flex items-center gap-1.5 py-1 pl-[52px] text-[11px]"
+                      style={{ color: 'var(--faint)' }}
                     >
-                      em foco
-                    </span>
+                      <Coffee className="size-3" />
+                      {formatDuration(folga)} livre
+                    </p>
                   )}
-                </button>
+
+                  <div
+                    className={cn(
+                      'flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors',
+                      ehAgora
+                        ? 'border-[color:var(--accent-base)] bg-accent'
+                        : 'border-transparent',
+                      (passou || concluida) && !ehAgora && 'opacity-45'
+                    )}
+                  >
+                    <span
+                      className="w-11 shrink-0 font-mono text-[11.5px]"
+                      style={{ color: ehAgora ? 'var(--accent-base)' : 'var(--faint)' }}
+                    >
+                      {formatHm(block.start)}
+                    </span>
+
+                    {categoria ? (
+                      <CategoryIcon
+                        icon={categoria.icon}
+                        color={categoria.color}
+                        variant="plain"
+                        className="size-3.5 shrink-0"
+                      />
+                    ) : (
+                      <Clock className="size-3.5 shrink-0" style={{ color: 'var(--faint)' }} />
+                    )}
+
+                    <span
+                      className={cn(
+                        'min-w-0 flex-1 truncate text-[12.5px]',
+                        ehAgora && 'font-semibold',
+                        concluida && 'line-through'
+                      )}
+                    >
+                      {block.task.title}
+                    </span>
+
+                    <span
+                      className="shrink-0 font-mono text-[11px]"
+                      style={{ color: 'var(--faint)' }}
+                    >
+                      {formatDuration(block.task.durationMinutes)}
+                    </span>
+                  </div>
+                </div>
               )
             })}
           </div>

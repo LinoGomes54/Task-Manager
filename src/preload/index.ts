@@ -54,6 +54,15 @@ const api = {
     toggleImportant: (id: string) => invoke<Task>(CHANNELS.tasks.toggleImportant, id),
     stats: () => invoke<DashboardStats>(CHANNELS.tasks.stats)
   },
+  agenda: {
+    list: (date: string) => invoke<Task[]>(CHANNELS.agenda.list, date),
+    add: (taskId: string, date: string) => invoke<Task>(CHANNELS.agenda.add, { taskId, date }),
+    remove: (taskId: string) => invoke<Task>(CHANNELS.agenda.remove, taskId),
+    reorder: (date: string, taskId: string, to: number) =>
+      invoke<Task[]>(CHANNELS.agenda.reorder, { date, taskId, to }),
+    setDuration: (taskId: string, minutes: number) =>
+      invoke<Task>(CHANNELS.agenda.setDuration, { taskId, minutes })
+  },
   categories: {
     list: () => invoke<Category[]>(CHANNELS.categories.list),
     create: (input: CreateCategoryInput) => invoke<Category>(CHANNELS.categories.create, input),

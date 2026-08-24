@@ -50,7 +50,21 @@ const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition
     column: 'accent_color',
     definition: "TEXT NOT NULL DEFAULT '#5b5bd6'"
   },
-  { table: 'tasks', column: 'recurrence_weekdays', definition: "TEXT NOT NULL DEFAULT ''" }
+  { table: 'tasks', column: 'recurrence_weekdays', definition: "TEXT NOT NULL DEFAULT ''" },
+  { table: 'tasks', column: 'duration_minutes', definition: 'INTEGER NOT NULL DEFAULT 25' },
+  { table: 'tasks', column: 'agenda_date', definition: 'TEXT' },
+  { table: 'tasks', column: 'agenda_position', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  {
+    table: 'user_settings',
+    column: 'pomodoro_minutes',
+    definition: 'INTEGER NOT NULL DEFAULT 25'
+  },
+  { table: 'user_settings', column: 'break_minutes', definition: 'INTEGER NOT NULL DEFAULT 5' },
+  {
+    table: 'user_settings',
+    column: 'agenda_start_time',
+    definition: "TEXT NOT NULL DEFAULT '09:00'"
+  }
 ]
 
 function runLocalMigrations(conn: DatabaseSync): void {

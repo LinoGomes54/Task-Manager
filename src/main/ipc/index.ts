@@ -103,6 +103,38 @@ export function registerIpcHandlers(): void {
 
   handle(CHANNELS.tasks.stats, () => tasks.getStats(requireUserId()))
 
+  /* --------------------------- agenda --------------------------- */
+
+  handle(CHANNELS.agenda.list, (date: string) => tasks.listAgenda(requireUserId(), date))
+
+  handle(CHANNELS.agenda.add, (input: { taskId: string; date: string }) => {
+    const userId = requireUserId()
+    const task = tasks.addToAgenda(userId, input.taskId, input.date)
+    afterMutation(userId)
+    return task
+  })
+
+  handle(CHANNELS.agenda.remove, (taskId: string) => {
+    const userId = requireUserId()
+    const task = tasks.removeFromAgenda(userId, taskId)
+    afterMutation(userId)
+    return task
+  })
+
+  handle(CHANNELS.agenda.reorder, (input: { date: string; taskId: string; to: number }) => {
+    const userId = requireUserId()
+    const lista = tasks.reorderAgenda(userId, input.date, input.taskId, input.to)
+    afterMutation(userId)
+    return lista
+  })
+
+  handle(CHANNELS.agenda.setDuration, (input: { taskId: string; minutes: number }) => {
+    const userId = requireUserId()
+    const task = tasks.setDuration(userId, input.taskId, input.minutes)
+    afterMutation(userId)
+    return task
+  })
+
   /* -------------------------- categorias ------------------------ */
 
   handle(CHANNELS.categories.list, () => categories.listCategories(requireUserId()))

@@ -15,6 +15,13 @@ export const CHANNELS = {
     toggleImportant: 'tasks:toggle-important',
     stats: 'tasks:stats'
   },
+  agenda: {
+    list: 'agenda:list',
+    add: 'agenda:add',
+    remove: 'agenda:remove',
+    reorder: 'agenda:reorder',
+    setDuration: 'agenda:set-duration'
+  },
   categories: {
     list: 'categories:list',
     create: 'categories:create',

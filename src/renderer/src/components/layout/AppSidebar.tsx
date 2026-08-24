@@ -53,7 +53,7 @@ const WORKSPACE = [
   { to: '/', label: 'Painel', meta: 'visão do dia', icon: LayoutDashboard, end: true },
   { to: '/tarefas', label: 'Tarefas', meta: 'lista completa', icon: ListChecks },
   { to: '/calendario', label: 'Calendário', meta: 'mês', icon: CalendarDays },
-  { to: '/playground', label: 'Playground', meta: 'cronômetro', icon: Timer }
+  { to: '/playground', label: 'Playground', meta: 'agenda do dia', icon: Timer }
 ]
 
 const RECURRENCE = [

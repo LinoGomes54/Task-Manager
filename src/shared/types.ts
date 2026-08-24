@@ -48,6 +48,16 @@ export interface Task {
   recurrenceWeekdays: number[]
   recurrenceUntil: string | null
   parentTaskId: string | null
+  /** Quanto tempo a tarefa ocupa na agenda do dia, em minutos. */
+  durationMinutes: number
+  /**
+   * Dia em que a tarefa foi colocada na agenda (`YYYY-MM-DD`), ou `null` se nao
+   * esta agendada. E separado de `dueAt` de proposito: o prazo diz *quando
+   * vence*, a agenda diz *quando eu vou fazer*.
+   */
+  agendaDate: string | null
+  /** Ordem dentro da agenda do dia. Os horarios saem daqui, encadeados. */
+  agendaPosition: number
   createdAt: string
   updatedAt: string
 }
@@ -70,6 +80,12 @@ export interface AppSettings {
   density: DensityPreference
   /** Cor de destaque em hex. Tudo o mais na paleta deriva dela. */
   accentColor: string
+  /** Duracao padrao de um bloco de trabalho na agenda. */
+  pomodoroMinutes: number
+  /** Intervalo inserido entre um bloco e o proximo. */
+  breakMinutes: number
+  /** Horario em que a agenda do dia comeca (`HH:mm`). */
+  agendaStartTime: string
   updatedAt: string
 }
 
@@ -87,6 +103,9 @@ export interface CreateTaskInput {
   recurrenceInterval?: number
   recurrenceWeekdays?: number[]
   recurrenceUntil?: string | null
+  durationMinutes?: number
+  agendaDate?: string | null
+  agendaPosition?: number
 }
 
 export type UpdateTaskInput = Partial<CreateTaskInput> & { id: string }

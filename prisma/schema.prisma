@@ -70,12 +70,16 @@ model Task {
   recurrenceWeekdays  String    @default("") @map("recurrence_weekdays")
   recurrenceUntil     DateTime? @map("recurrence_until") @db.Timestamptz(6)
   parentTaskId        String?   @map("parent_task_id")
+  durationMinutes     Int       @default(25) @map("duration_minutes")
+  agendaDate          String?   @map("agenda_date")
+  agendaPosition      Int       @default(0) @map("agenda_position")
   createdAt           DateTime  @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @map("updated_at") @db.Timestamptz(6)
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([userId, updatedAt], map: "idx_tasks_user_upd")
   @@index([userId, dueAt], map: "idx_tasks_user_due")
+  @@index([userId, agendaDate, agendaPosition], map: "idx_tasks_agenda")
   @@map("tasks")
 }
 
@@ -91,6 +95,9 @@ model UserSettings {
   theme                String    @default("system")
   density              String    @default("espacoso")
   accentColor          String    @default("#5b5bd6") @map("accent_color")
+  pomodoroMinutes      Int       @default(25) @map("pomodoro_minutes")
+  breakMinutes         Int       @default(5) @map("break_minutes")
+  agendaStartTime      String    @default("09:00") @map("agenda_start_time")
   createdAt            DateTime  @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime  @map("updated_at") @db.Timestamptz(6)
   deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
