@@ -69,10 +69,9 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
   return (
     <>
       {/*
-        A linha inteira abre a edicao, e nao apenas o texto do titulo: com a area
-        clicavel limitada ao texto, clicar no espaco vazio da linha nao fazia
-        nada, e o checkbox — o alvo mais facil de acertar — dava a impressao de
-        que clicar na tarefa so servia para concluir.
+        Clicar em qualquer ponto da linha conclui a tarefa — a acao mais frequente
+        de uma lista de tarefas merece o alvo maior. Editar fica no lapis e no
+        menu, que sao alvos deliberados.
 
         O clique vem de um botao esticado por tras do conteudo (`inset-0`) em vez
         de um `onClick` no container: assim continua sendo um botao de verdade,
@@ -81,16 +80,18 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
       */}
       <div
         className={cn(
-          'group bg-card hover:border-ring/40 relative flex items-center gap-3 rounded-xl border px-4 transition-colors',
+          'group bg-card relative flex items-center gap-3 rounded-xl border px-4 transition-colors',
+          locked ? 'cursor-not-allowed' : 'hover:border-ring/40',
           done && 'opacity-55'
         )}
         style={{ paddingBlock: 'var(--row-padding)' }}
       >
         <button
           type="button"
-          onClick={() => openEdit(task)}
-          className="absolute inset-0 z-0 cursor-pointer rounded-xl"
-          aria-label={`Editar “${task.title}”`}
+          onClick={() => toggleComplete.mutate(task.id)}
+          disabled={locked}
+          className="absolute inset-0 z-0 rounded-xl enabled:cursor-pointer"
+          aria-label={done ? `Reabrir “${task.title}”` : `Concluir “${task.title}”`}
         />
 
         {locked ? (
@@ -178,6 +179,16 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
             {priority.label}
           </span>
         )}
+
+        <button
+          type="button"
+          onClick={() => openEdit(task)}
+          title="Editar tarefa"
+          aria-label={`Editar “${task.title}”`}
+          className="text-muted-foreground hover:text-foreground relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          <Pencil className="size-4" />
+        </button>
 
         <button
           type="button"
