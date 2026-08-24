@@ -124,9 +124,13 @@ export function describeSchedule(options: {
         nomes.length === 1
           ? nomes[0]
           : `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`
+      // A contagem vem junto porque "quantas vezes na semana" e a pergunta que se
+      // faz de uma tarefa semanal — ler a lista de dias e contar de cabeca e um
+      // passo a mais para uma informacao que o app ja tem.
+      const vezes = dias.length > 1 ? ` — ${dias.length}x por semana` : ''
       return interval > 1
-        ? `${lista}, a cada ${interval} semanas, às ${time}.`
-        : `Toda ${lista}, às ${time}.`
+        ? `${lista}, a cada ${interval} semanas, às ${time}${vezes}.`
+        : `Toda ${lista}, às ${time}${vezes}.`
     }
 
     case 'monthly':
