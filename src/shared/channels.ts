@@ -20,7 +20,8 @@ export const CHANNELS = {
     add: 'agenda:add',
     remove: 'agenda:remove',
     reorder: 'agenda:reorder',
-    setDuration: 'agenda:set-duration'
+    setDuration: 'agenda:set-duration',
+    applySchedule: 'agenda:apply-schedule'
   },
   categories: {
     list: 'categories:list',

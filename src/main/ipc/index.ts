@@ -135,6 +135,16 @@ export function registerIpcHandlers(): void {
     return task
   })
 
+  handle(
+    CHANNELS.agenda.applySchedule,
+    (input: { date: string; items: Array<{ taskId: string; dueAt: string }> }) => {
+      const userId = requireUserId()
+      const lista = tasks.applySchedule(userId, input.date, input.items)
+      afterMutation(userId)
+      return lista
+    }
+  )
+
   /* -------------------------- categorias ------------------------ */
 
   handle(CHANNELS.categories.list, () => categories.listCategories(requireUserId()))

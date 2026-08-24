@@ -567,3 +567,34 @@ export function setDuration(userId: string, taskId: string, minutes: number): Ta
   )
   return getTask(userId, taskId)!
 }
+
+/**
+ * Grava de uma vez os horarios calculados pelo encadeamento.
+ *
+ * Numa transacao so: aplicar tarefa por tarefa deixaria a agenda meio montada
+ * se algo falhasse no meio, com metade dos horarios novos e metade dos antigos.
+ *
+ * `notified_at` volta a NULL porque o horario mudou — o alarme precisa poder
+ * disparar de novo no horario certo.
+ */
+export function applySchedule(
+  userId: string,
+  date: string,
+  items: Array<{ taskId: string; dueAt: string }>
+): Task[] {
+  const timestamp = now()
+
+  transaction(() => {
+    items.forEach((item, index) => {
+      execute(
+        `UPDATE tasks
+            SET due_at = ?, agenda_date = ?, agenda_position = ?, notified_at = NULL,
+                updated_at = ?, dirty = 1
+          WHERE id = ? AND user_id = ?`,
+        [item.dueAt, date, index, timestamp, item.taskId, userId]
+      )
+    })
+  })
+
+  return listAgenda(userId, date)
+}

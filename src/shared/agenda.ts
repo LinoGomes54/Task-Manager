@@ -121,3 +121,44 @@ export function dayRange(date: Date = new Date()): { from: string; to: string } 
   to.setHours(23, 59, 59, 999)
   return { from: from.toISOString(), to: to.toISOString() }
 }
+
+/* ------------------------------------------------------------------ */
+/* Encadeamento automatico                                             */
+/* ------------------------------------------------------------------ */
+
+export interface ChainedSlot {
+  task: Task
+  start: Date
+  end: Date
+  /** Minutos de descanso apos este bloco. Zero no ultimo. */
+  breakAfter: number
+}
+
+/**
+ * Distribui tarefas em sequencia a partir de um horario, inserindo descanso
+ * entre elas.
+ *
+ * Serve para montar o dia sem digitar horario por tarefa: voce define a ordem e
+ * o inicio, e o resto e aritmetica. O descanso nunca entra depois do ultimo
+ * bloco — uma folga pendurada no fim da agenda nao representa nada.
+ */
+export function chainSchedule(
+  tasks: Task[],
+  options: { date: Date; startTime: string; breakMinutes: number }
+): ChainedSlot[] {
+  const [hora, minuto] = options.startTime.split(':').map(Number)
+  const cursor = new Date(options.date)
+  cursor.setHours(hora || 0, minuto || 0, 0, 0)
+
+  return tasks.map((task, index) => {
+    const minutos = Math.max(1, task.durationMinutes)
+    const start = new Date(cursor)
+    const end = new Date(start.getTime() + minutos * 60_000)
+
+    const ultimo = index === tasks.length - 1
+    const descanso = ultimo ? 0 : Math.max(0, options.breakMinutes)
+
+    cursor.setTime(end.getTime() + descanso * 60_000)
+    return { task, start, end, breakAfter: descanso }
+  })
+}

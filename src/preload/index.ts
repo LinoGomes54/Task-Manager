@@ -61,7 +61,9 @@ const api = {
     reorder: (date: string, taskId: string, to: number) =>
       invoke<Task[]>(CHANNELS.agenda.reorder, { date, taskId, to }),
     setDuration: (taskId: string, minutes: number) =>
-      invoke<Task>(CHANNELS.agenda.setDuration, { taskId, minutes })
+      invoke<Task>(CHANNELS.agenda.setDuration, { taskId, minutes }),
+    applySchedule: (date: string, items: Array<{ taskId: string; dueAt: string }>) =>
+      invoke<Task[]>(CHANNELS.agenda.applySchedule, { date, items })
   },
   categories: {
     list: () => invoke<Category[]>(CHANNELS.categories.list),

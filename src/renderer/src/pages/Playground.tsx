@@ -1,4 +1,5 @@
-import { Bell, Check, CircleDot, Clock, Coffee, Inbox, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Bell, CalendarClock, Check, CircleDot, Clock, Coffee, Inbox, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import {
 } from '@shared/agenda'
 import { combineDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { PlanDayDialog } from '@/components/tasks/PlanDayDialog'
 
 /**
  * Playground: a agenda do dia.
@@ -33,6 +35,7 @@ import { cn } from '@/lib/utils'
  * no instante em que alguem esquecesse.
  */
 export function PlaygroundPage(): React.JSX.Element {
+  const [montandoDia, setMontandoDia] = useState(false)
   const { current, next, blocks, isLoading } = useCurrentTask()
   const { from, to } = dayRange()
   const { data: lembretes = [] } = useTasks({ from, to, kind: 'reminder' })
@@ -59,13 +62,19 @@ export function PlaygroundPage(): React.JSX.Element {
             : undefined
         }
         action={
-          <Button
-            onClick={() => openNew({ dueAt: combineDateTime(agora, formatHm(agora)) })}
-            className="gap-1.5"
-          >
-            <Plus className="size-4" />
-            Nova tarefa
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-1.5" onClick={() => setMontandoDia(true)}>
+              <CalendarClock className="size-4" />
+              Montar o dia
+            </Button>
+            <Button
+              onClick={() => openNew({ dueAt: combineDateTime(agora, formatHm(agora)) })}
+              className="gap-1.5"
+            >
+              <Plus className="size-4" />
+              Nova tarefa
+            </Button>
+          </div>
         }
       />
 
@@ -334,6 +343,7 @@ export function PlaygroundPage(): React.JSX.Element {
           </div>
         </Panel>
       </div>
+      <PlanDayDialog open={montandoDia} onOpenChange={setMontandoDia} />
     </>
   )
 }
