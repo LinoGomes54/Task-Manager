@@ -68,19 +68,37 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
 
   return (
     <>
+      {/*
+        A linha inteira abre a edicao, e nao apenas o texto do titulo: com a area
+        clicavel limitada ao texto, clicar no espaco vazio da linha nao fazia
+        nada, e o checkbox — o alvo mais facil de acertar — dava a impressao de
+        que clicar na tarefa so servia para concluir.
+
+        O clique vem de um botao esticado por tras do conteudo (`inset-0`) em vez
+        de um `onClick` no container: assim continua sendo um botao de verdade,
+        alcancavel por teclado e anunciado por leitor de tela. Os controles ficam
+        acima dele com `relative`, entao cada um recebe o proprio clique.
+      */}
       <div
         className={cn(
-          'group bg-card hover:border-ring/40 flex items-center gap-3 rounded-xl border px-4 transition-colors',
+          'group bg-card hover:border-ring/40 relative flex items-center gap-3 rounded-xl border px-4 transition-colors',
           done && 'opacity-55'
         )}
         style={{ paddingBlock: 'var(--row-padding)' }}
       >
+        <button
+          type="button"
+          onClick={() => openEdit(task)}
+          className="absolute inset-0 z-0 cursor-pointer rounded-xl"
+          aria-label={`Editar “${task.title}”`}
+        />
+
         {locked ? (
           <Tooltip>
             <TooltipTrigger asChild>
               {/* O span existe porque um controle desabilitado nao dispara os
                   eventos de mouse que o tooltip precisa para abrir. */}
-              <span className="flex cursor-not-allowed self-start pt-0.5">
+              <span className="relative flex cursor-not-allowed self-start pt-0.5">
                 <Checkbox checked={false} disabled aria-label="Repetição ainda não disponível" />
               </span>
             </TooltipTrigger>
@@ -92,16 +110,12 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
           <Checkbox
             checked={done}
             onCheckedChange={() => toggleComplete.mutate(task.id)}
-            className="self-start mt-0.5"
+            className="relative mt-0.5 self-start"
             aria-label={done ? 'Reabrir tarefa' : 'Concluir tarefa'}
           />
         )}
 
-        <button
-          type="button"
-          onClick={() => openEdit(task)}
-          className="min-w-0 flex-1 cursor-pointer text-left"
-        >
+        <div className="pointer-events-none relative min-w-0 flex-1">
           <p
             className={cn(
               'truncate font-medium',
@@ -139,12 +153,15 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
               {task.description && <span className="truncate">{task.description}</span>}
             </p>
           )}
-        </button>
+        </div>
 
         {/* Metadados a direita, na ordem do design: horario, prioridade, acoes. */}
         {task.dueAt && (
           <span
-            className={cn('shrink-0 font-mono text-[12.5px]', late && 'text-destructive')}
+            className={cn(
+              'pointer-events-none relative shrink-0 font-mono text-[12.5px]',
+              late && 'text-destructive'
+            )}
             style={late ? undefined : { color: 'var(--faint)' }}
             title={formatDueDate(task.dueAt)}
           >
@@ -154,7 +171,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
 
         {priority && !done && (
           <span
-            className="shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] font-medium text-white"
+            className="pointer-events-none relative shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] font-medium text-white"
             style={{ backgroundColor: priority.color }}
             title={`Prioridade ${priority.label === 'P1' ? 'alta' : 'média'}`}
           >
@@ -167,7 +184,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
           onClick={() => toggleImportant.mutate(task.id)}
           aria-label={task.isImportant ? 'Remover dos importantes' : 'Marcar como importante'}
           className={cn(
-            'shrink-0 transition-opacity',
+            'relative shrink-0 transition-opacity',
             task.isImportant ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           )}
         >
@@ -184,7 +201,7 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="relative size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
             >
               <MoreHorizontal className="size-4" />
               <span className="sr-only">Ações da tarefa</span>
