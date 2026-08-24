@@ -1,6 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Search, LogOut, Palette, PanelLeft, Tags, Settings } from 'lucide-react'
+import {
+  Search,
+  LogOut,
+  Palette,
+  PanelLeft,
+  Tags,
+  Settings,
+  LayoutDashboard,
+  ListChecks,
+  CalendarDays,
+  Timer,
+  Sun,
+  Star,
+  Repeat,
+  CalendarRange,
+  CalendarClock
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -34,16 +50,16 @@ import { cn } from '@/lib/utils'
  */
 
 const WORKSPACE = [
-  { to: '/', label: 'Painel', meta: 'visão do dia', end: true },
-  { to: '/tarefas', label: 'Tarefas', meta: 'lista completa' },
-  { to: '/calendario', label: 'Calendário', meta: 'mês' },
-  { to: '/playground', label: 'Playground', meta: 'cronômetro' }
+  { to: '/', label: 'Painel', meta: 'visão do dia', icon: LayoutDashboard, end: true },
+  { to: '/tarefas', label: 'Tarefas', meta: 'lista completa', icon: ListChecks },
+  { to: '/calendario', label: 'Calendário', meta: 'mês', icon: CalendarDays },
+  { to: '/playground', label: 'Playground', meta: 'cronômetro', icon: Timer }
 ]
 
 const RECURRENCE = [
-  { to: '/diariamente', label: 'Diariamente' },
-  { to: '/semanalmente', label: 'Semanalmente' },
-  { to: '/mensalmente', label: 'Mensalmente' }
+  { to: '/diariamente', label: 'Diariamente', icon: Repeat },
+  { to: '/semanalmente', label: 'Semanalmente', icon: CalendarRange },
+  { to: '/mensalmente', label: 'Mensalmente', icon: CalendarClock }
 ]
 
 export function AppSidebar(): React.JSX.Element {
@@ -102,6 +118,7 @@ export function AppSidebar(): React.JSX.Element {
               to={item.to}
               label={item.label}
               meta={item.meta}
+              icon={<item.icon className="size-4" />}
               active={isActive(item.to, item.end)}
             />
           ))}
@@ -112,12 +129,14 @@ export function AppSidebar(): React.JSX.Element {
             to="/hoje"
             label="Hoje"
             meta={stats?.dueToday}
+            icon={<Sun className="size-4" />}
             active={isActive('/hoje')}
           />
           <NavRow
             to="/importantes"
             label="Importantes"
             meta={stats?.importantPending}
+            icon={<Star className="size-4" />}
             active={isActive('/importantes')}
           />
         </NavSection>
@@ -128,6 +147,7 @@ export function AppSidebar(): React.JSX.Element {
               key={item.to}
               to={item.to}
               label={item.label}
+              icon={<item.icon className="size-4" />}
               active={isActive(item.to)}
             />
           ))}
@@ -139,13 +159,13 @@ export function AppSidebar(): React.JSX.Element {
             label="Categorias"
             meta={categories.length || undefined}
             active={isActive('/categorias')}
-            icon={<Tags className="size-3.5" />}
+            icon={<Tags className="size-4" />}
           />
           <NavRow
             to="/configuracoes"
             label="Configurações"
             active={isActive('/configuracoes')}
-            icon={<Settings className="size-3.5" />}
+            icon={<Settings className="size-4" />}
           />
         </NavSection>
       </SidebarContent>
@@ -164,7 +184,7 @@ export function AppSidebar(): React.JSX.Element {
               : 'tema · cor'
           }
           active={false}
-          icon={<Palette className="size-3.5" />}
+          icon={<Palette className="size-4" />}
         />
 
         <div className="border-border bg-card mt-1.5 flex items-center gap-2.5 rounded-[10px] border p-[7px_8px] group-data-[collapsible=icon]:hidden">
@@ -220,9 +240,12 @@ function NavSection({
 }): React.JSX.Element {
   return (
     <SidebarGroup className="gap-1 py-1">
-      <SidebarGroupLabel className="section-label h-auto px-2 pb-0.5">
+      <SidebarGroupLabel className="section-label h-auto px-2 pb-0.5 group-data-[collapsible=icon]:hidden">
         {label}
       </SidebarGroupLabel>
+      {/* Recolhida, a barra troca o rotulo por um separador: o texto nao cabe,
+          mas sem nenhuma marca os grupos viram uma fileira unica de icones. */}
+      <div className="bg-sidebar-border mx-auto hidden h-px w-5 group-data-[collapsible=icon]:block" />
       <SidebarGroupContent>
         <div className="flex flex-col gap-0.5">{children}</div>
       </SidebarGroupContent>
@@ -252,13 +275,14 @@ function NavRow({ to, label, meta, active, icon }: NavRowProps): React.JSX.Eleme
       title={label}
       className={cn(
         'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-[13.5px] transition-colors',
-        'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0',
+        // No modo icone a linha vira um quadrado com o icone centralizado.
+        'group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0',
         active
           ? 'bg-sidebar-accent nav-active font-semibold'
           : 'hover:bg-sidebar-accent/60 font-medium'
       )}
     >
-      <span className="flex min-w-0 items-center gap-2">
+      <span className="flex min-w-0 items-center gap-2 group-data-[collapsible=icon]:gap-0">
         {icon}
         <span className="truncate group-data-[collapsible=icon]:hidden">{label}</span>
       </span>
@@ -309,18 +333,18 @@ function SidebarSearch(): React.JSX.Element {
   }
 
   return (
-    <form onSubmit={submit} className="group-data-[collapsible=icon]:hidden">
-      <div className="border-border bg-card focus-within:border-ring flex items-center gap-2 rounded-[9px] border px-3 py-2 transition-colors">
+    <form onSubmit={submit}>
+      <div className="border-border bg-card focus-within:border-ring flex items-center gap-2 rounded-[9px] border px-3 py-2 transition-colors group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
         <Search className="size-3.5 shrink-0" style={{ color: 'var(--faint)' }} />
         <input
           ref={inputRef}
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           placeholder="Buscar"
-          className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[color:var(--faint)]"
+          className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[color:var(--faint)] group-data-[collapsible=icon]:hidden"
         />
         <kbd
-          className="font-mono text-[10.5px] shrink-0"
+          className="shrink-0 font-mono text-[10.5px] group-data-[collapsible=icon]:hidden"
           style={{ color: 'var(--faint)' }}
         >
           Ctrl K
