@@ -155,9 +155,9 @@ export function TaskDialog(): React.JSX.Element {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
-      <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100vh-4rem)] flex-col gap-0 sm:max-w-lg">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <DialogHeader className="shrink-0 pb-1">
             <DialogTitle>{editing ? 'Editar tarefa' : 'Nova tarefa'}</DialogTitle>
             <DialogDescription>
               {editing
@@ -166,7 +166,7 @@ export function TaskDialog(): React.JSX.Element {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="-mx-1 grid min-h-0 flex-1 gap-4 overflow-y-auto px-1 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Título</Label>
               <Input
@@ -393,7 +393,7 @@ export function TaskDialog(): React.JSX.Element {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-2">
             <Button type="button" variant="ghost" onClick={close}>
               <X className="size-4" />
               Cancelar
