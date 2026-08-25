@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator'
 import { AppSidebar } from './AppSidebar'
 import { SyncIndicator } from './SyncIndicator'
 import { CurrentTaskIndicator } from './CurrentTaskIndicator'
+import { HeaderClock } from './HeaderClock'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 
 /**
@@ -37,6 +38,8 @@ function Topbar(): React.JSX.Element {
           <Separator orientation="vertical" className="mr-1 h-5" />
         </>
       )}
+
+      <HeaderClock />
 
       <div className="flex-1" />
 
