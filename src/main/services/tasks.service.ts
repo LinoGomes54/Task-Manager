@@ -70,7 +70,11 @@ export function listTasks(userId: string, filters: TaskFilters = {}): Task[] {
   const params: unknown[] = [userId]
 
   if (filters.search?.trim()) {
-    where.push('(lower(title) LIKE ? OR lower(ifnull(description, "")) LIKE ?)')
+    // Aspas SIMPLES no literal vazio: em SQLite, "" e um identificador entre
+    // aspas, nao uma string. O `node:sqlite` roda com o modo estrito, entao a
+    // consulta inteira falhava com `no such column: ""` — e a busca nunca
+    // devolvia nada, sem erro visivel na tela.
+    where.push("(lower(title) LIKE ? OR lower(ifnull(description, '')) LIKE ?)")
     const term = `%${filters.search.trim().toLowerCase()}%`
     params.push(term, term)
   }
