@@ -39,17 +39,27 @@ function Topbar(): React.JSX.Element {
         </>
       )}
 
-      <HeaderClock />
+      {/*
+        Grade de tres colunas em vez de `flex-1` nas pontas: as duas colunas `1fr`
+        ficam com a mesma largura, entao o relogio fica no centro do cabecalho de
+        verdade — e nao no meio do espaco que sobrou, que se desloca conforme o
+        titulo da tarefa em andamento cresce.
+      */}
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="flex min-w-0 justify-start">
+          <CurrentTaskIndicator />
+        </div>
 
-      <div className="flex-1" />
+        <HeaderClock />
 
-      <CurrentTaskIndicator />
-      <SyncIndicator />
-
-      <Button size="sm" className="gap-1.5" onClick={() => openNewTask()}>
-        <Plus className="size-4" />
-        Nova tarefa
-      </Button>
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <SyncIndicator />
+          <Button size="sm" className="gap-1.5" onClick={() => openNewTask()}>
+            <Plus className="size-4" />
+            Nova tarefa
+          </Button>
+        </div>
+      </div>
     </header>
   )
 }

@@ -8,7 +8,11 @@ import { formatHm, minutesLeft, progressOf, formatDuration } from '@shared/agend
 import { cn } from '@/lib/utils'
 
 /**
- * A tarefa que o horario diz estar acontecendo agora, no topo do app.
+ * Card da tarefa que o horario diz estar acontecendo agora, no topo do app.
+ *
+ * O card inteiro leva ao Playground — e ali que o dia esta detalhado, entao
+ * qualquer canto do card e um caminho para ele. O botao de concluir para a
+ * propagacao: quem clica no visto quer marcar a tarefa, nao trocar de tela.
  *
  * Some quando nao ha nada em andamento — um espaco vazio permanente no cabecalho
  * so ocuparia lugar. Quando nao ha tarefa agora mas ha uma proxima, mostra a
@@ -30,12 +34,22 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate('/playground')}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          navigate('/playground')
+        }
+      }}
+      title={emAndamento ? 'Em andamento agora — abrir o Playground' : 'Próxima tarefa'}
       className={cn(
-        'relative flex min-w-0 max-w-[380px] items-center gap-2.5 overflow-hidden rounded-full border py-1 pr-1 pl-3',
-        emAndamento ? 'border-[color:var(--accent-base)]' : 'border-border'
+        'relative flex min-w-0 max-w-[380px] cursor-pointer items-center gap-2.5 overflow-hidden rounded-full border py-1 pr-1 pl-3 transition-colors',
+        emAndamento ? 'border-[color:var(--accent-base)]' : 'border-border hover:border-ring/40'
       )}
     >
-      {/* Progresso do bloco pintado no fundo da pilula. */}
+      {/* Progresso do bloco pintado no fundo do card. */}
       {emAndamento && (
         <span
           className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-1000"
@@ -46,39 +60,40 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
         />
       )}
 
-      <button
-        type="button"
-        onClick={() => navigate('/playground')}
-        title={emAndamento ? 'Em andamento agora' : 'Próxima tarefa'}
-        className="relative flex min-w-0 items-center gap-2"
+      {categoria ? (
+        <CategoryIcon
+          icon={categoria.icon}
+          color={categoria.color}
+          variant="plain"
+          className="relative size-3.5 shrink-0"
+        />
+      ) : (
+        <CircleDot
+          className="relative size-3.5 shrink-0"
+          style={{ color: emAndamento ? 'var(--accent-base)' : 'var(--faint)' }}
+        />
+      )}
+
+      <span className="relative min-w-0 truncate text-[12.5px] font-medium">
+        {bloco.task.title}
+      </span>
+
+      <span
+        className="relative shrink-0 font-mono text-[11.5px]"
+        style={{ color: 'var(--faint)' }}
       >
-        {categoria ? (
-          <CategoryIcon
-            icon={categoria.icon}
-            color={categoria.color}
-            variant="plain"
-            className="size-3.5 shrink-0"
-          />
-        ) : (
-          <CircleDot
-            className="size-3.5 shrink-0"
-            style={{ color: emAndamento ? 'var(--accent-base)' : 'var(--faint)' }}
-          />
-        )}
-
-        <span className="min-w-0 truncate text-[12.5px] font-medium">{bloco.task.title}</span>
-
-        <span className="shrink-0 font-mono text-[11.5px]" style={{ color: 'var(--faint)' }}>
-          {emAndamento
-            ? `${formatDuration(restante)} · até ${formatHm(bloco.end)}`
-            : `${formatHm(bloco.start)}`}
-        </span>
-      </button>
+        {emAndamento
+          ? `${formatDuration(restante)} · até ${formatHm(bloco.end)}`
+          : `${formatHm(bloco.start)}`}
+      </span>
 
       {emAndamento && (
         <button
           type="button"
-          onClick={() => toggleComplete.mutate(bloco.task.id)}
+          onClick={(event) => {
+            event.stopPropagation()
+            toggleComplete.mutate(bloco.task.id)
+          }}
           title="Concluir esta tarefa"
           aria-label={`Concluir ${bloco.task.title}`}
           className="hover:bg-accent relative flex size-6 shrink-0 items-center justify-center rounded-full transition-colors"
