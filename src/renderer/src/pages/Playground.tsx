@@ -44,6 +44,8 @@ export function PlaygroundPage(): React.JSX.Element {
   const openNew = useTaskDialog((store) => store.openNew)
 
   const agora = new Date()
+  const inicioDoDia = new Date(agora)
+  inicioDoDia.setHours(0, 0, 0, 0)
   const gaps = gapsBetween(blocks)
   const minutosPlanejados = totalMinutes(blocks)
   const sobreposto = hasOverlap(blocks)
@@ -195,6 +197,9 @@ export function PlaygroundPage(): React.JSX.Element {
               const passou = block.end.getTime() < agora.getTime()
               const concluida = block.task.status === 'done'
               const folga = gapAntesDe(block)
+              // Um bloco que atravessou a meia-noite comeca no dia anterior. Sem
+              // avisar, "23:00" na linha de hoje se le como hoje a noite.
+              const comecouOntem = block.start.getTime() < inicioDoDia.getTime()
 
               return (
                 <div key={block.task.id}>
@@ -218,10 +223,15 @@ export function PlaygroundPage(): React.JSX.Element {
                     )}
                   >
                     <span
-                      className="w-11 shrink-0 font-mono text-[11.5px]"
+                      className="flex w-11 shrink-0 flex-col font-mono text-[11.5px] leading-tight"
                       style={{ color: ehAgora ? 'var(--accent-base)' : 'var(--faint)' }}
                     >
                       {formatHm(block.start)}
+                      {comecouOntem && (
+                        <span className="text-[9.5px]" style={{ color: 'var(--faint)' }}>
+                          ontem
+                        </span>
+                      )}
                     </span>
 
                     {categoria ? (
