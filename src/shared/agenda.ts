@@ -123,6 +123,21 @@ export function currentBlock(blocks: TaskBlock[], at: Date = new Date()): TaskBl
   )
 }
 
+/**
+ * O bloco que contem `at`, **mesmo que a tarefa ja esteja concluida**.
+ *
+ * `currentBlock` ignora o que ja foi feito de proposito — o app nao deve dizer
+ * que voce esta na academia depois de voce ter marcado que saiu. Mas "concluida"
+ * e "nao existe" sao coisas diferentes, e sem distinguir as duas a tela cai no
+ * mesmo vazio de um dia sem nada agendado.
+ */
+export function blockCovering(blocks: TaskBlock[], at: Date = new Date()): TaskBlock | null {
+  const agora = at.getTime()
+  return (
+    blocks.find((b) => agora >= b.start.getTime() && agora < b.end.getTime()) ?? null
+  )
+}
+
 /** A proxima tarefa a comecar, para o app dizer o que vem depois. */
 export function nextBlock(blocks: TaskBlock[], at: Date = new Date()): TaskBlock | null {
   const agora = at.getTime()

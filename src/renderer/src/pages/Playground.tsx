@@ -19,6 +19,7 @@ import {
   progressBetween,
   gapsBetween,
   currentGap,
+  blockCovering,
   isCycleBreak,
   totalMinutes,
   hasOverlap,
@@ -57,6 +58,14 @@ export function PlaygroundPage(): React.JSX.Element {
   // Estar em descanso e um estado do dia: quando nenhum bloco esta correndo, a
   // folga que contem o agora e o que responde "e agora, o que eu faco?".
   const descanso = current ? null : currentGap(blocks, agora)
+  // Concluida no meio do caminho: o horario ainda esta dentro do bloco, mas a
+  // tarefa ja foi marcada como feita. Sem esta distincao a tela dizia "nada
+  // agendado", que le como "o dia acabou" em vez de "voce terminou isso".
+  const concluidaAgora = (() => {
+    if (current || descanso) return null
+    const bloco = blockCovering(blocks, agora)
+    return bloco && bloco.task.status === 'done' ? bloco : null
+  })()
 
   // Um cronometro so, apontado para o que estiver correndo agora. Hooks nao podem
   // ficar dentro de condicional, entao o alvo e que muda — nao a chamada.
@@ -95,7 +104,10 @@ export function PlaygroundPage(): React.JSX.Element {
       />
 
       <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
-        <Panel title="Agora" meta={current || descanso ? formatHm(agora) : undefined}>
+        <Panel
+          title="Agora"
+          meta={current || descanso || concluidaAgora ? formatHm(agora) : undefined}
+        >
           {isLoading && <Skeleton className="h-40 w-full rounded-xl" />}
 
           {!isLoading && !current && descanso && (
@@ -173,7 +185,52 @@ export function PlaygroundPage(): React.JSX.Element {
             </div>
           )}
 
-          {!isLoading && !current && !descanso && (
+          {!isLoading && concluidaAgora && (
+            <div className="py-2">
+              <div className="mb-4 flex items-start gap-3">
+                <span
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg border"
+                  style={{ color: 'var(--faint)' }}
+                >
+                  <Check className="size-4" />
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-[19px] leading-tight font-semibold">
+                    {concluidaAgora.task.title}
+                    <span className="ml-2 text-[13px] font-normal" style={{ color: 'var(--faint)' }}>
+                      concluída
+                    </span>
+                  </p>
+                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--faint)' }}>
+                    O bloco ia até{' '}
+                    <span className="font-mono">{formatHm(concluidaAgora.end)}</span>
+                    {concluidaAgora.cycle &&
+                      concluidaAgora.cycle.total > 1 &&
+                      ` · encerrou os ${concluidaAgora.cycle.total} ciclos`}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mb-4 text-[12.5px]" style={{ color: 'var(--faint)' }}>
+                {next
+                  ? `A próxima é “${next.task.title}”, às ${formatHm(next.start)}.`
+                  : 'Nada mais agendado para hoje.'}
+              </p>
+
+              {/* Reabrir e o caminho de volta para quem marcou sem querer — sem
+                  isso, o resto do dia sumia e a tela nao dizia como recupera-lo. */}
+              <Button
+                variant="outline"
+                className="w-full gap-1.5"
+                onClick={() => toggleComplete.mutate(concluidaAgora.task.id)}
+              >
+                Reabrir tarefa
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !current && !descanso && !concluidaAgora && (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Coffee className="mb-2 size-7" style={{ color: 'var(--faint)' }} />
               <p className="text-[13px] font-medium">Nada agendado para agora</p>

@@ -212,6 +212,26 @@ As duas leituras de "recolher" são legítimas — liberar a tela ou manter o me
 então é escolha, não regra. O botão de expandir aparece no cabeçalho nos dois casos, para a
 barra nunca ficar sem volta.
 
+### Tarefa concluída no meio do bloco
+
+Concluir uma tarefa encerra **todos** os ciclos que sobraram — é uma ação sua, e "terminei
+antes" é uma coisa legítima de dizer. Mas o painel **Agora** passava a mostrar apenas
+"Nada agendado para agora", que se lê como *o dia acabou* em vez de *você terminou isso*.
+
+Agora ele distingue os dois casos:
+
+```
+Estudar  concluída
+O bloco ia até 09:25 · encerrou os 4 ciclos
+Nada mais agendado para hoje.
+
+            [ Reabrir tarefa ]
+```
+
+O botão de reabrir é o caminho de volta para quem marcou sem querer — um clique no visto do
+cartão do cabeçalho durante o primeiro ciclo encerrava o resto do dia, e a tela não dizia
+como recuperá-lo.
+
 ### Cronômetro no Playground
 
 O painel **Agora** mostra a contagem regressiva do que está acontecendo, em segundos:
