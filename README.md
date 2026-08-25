@@ -236,16 +236,11 @@ como recuperá-lo.
 
 O painel **Agora** mostra a contagem regressiva do que está acontecendo, em segundos:
 
-```
-Academia
-08:28 às 09:28 · 1h
+O progresso é um **anel**, não uma barra: o arco começa no topo e fecha no sentido horário,
+que é como se lê um relógio. Uma barra reta obrigava a traduzir "quanto falta" de comprimento
+para tempo; aqui a própria forma já diz. A contagem fica no centro do anel.
 
-            49:53  restantes
-
-bloco de 1h              termina às 09:28
-```
-
-Durante uma pausa o mesmo número conta o descanso (`4:12 de descanso`).
+Durante uma pausa o mesmo anel conta o descanso.
 
 **Não há play nem pause, de propósito.** O que manda é o relógio: a tarefa começa e termina no
 horário que ela tem, e um cronômetro manual passaria a mentir no instante em que alguém

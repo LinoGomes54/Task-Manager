@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/PageHeader'
 import { Panel } from '@/components/Panel'
+import { ProgressRing } from '@/components/ProgressRing'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { useCurrentTask } from '@/hooks/use-current-task'
 import { useCountdown, formatCountdown } from '@/hooks/use-countdown'
@@ -132,28 +133,17 @@ export function PlaygroundPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="mb-4 flex items-baseline justify-center gap-2">
-                <span className="text-[44px] leading-none font-semibold tabular-nums">
-                  {formatCountdown(restante)}
-                </span>
-                <span className="text-[12px]" style={{ color: 'var(--faint)' }}>
-                  de descanso
-                </span>
-              </div>
-
-              {/* Mesma barra do bloco de trabalho: o descanso tambem tem inicio,
+              {/* Mesmo anel do bloco de trabalho: o descanso tambem tem inicio,
                   fim e um quanto-ja-passou. */}
-              <div
-                className="mb-2 h-2 w-full overflow-hidden rounded-full"
-                style={{ backgroundColor: 'var(--border)' }}
-              >
-                <div
-                  className="h-full rounded-full transition-[width] duration-1000"
-                  style={{
-                    width: `${progressBetween(descanso.start, descanso.end, agora)}%`,
-                    backgroundColor: 'var(--accent-base)'
-                  }}
-                />
+              <div className="mb-5 flex justify-center">
+                <ProgressRing progress={progressBetween(descanso.start, descanso.end, agora)}>
+                  <span className="text-[34px] leading-none font-semibold tabular-nums">
+                    {formatCountdown(restante)}
+                  </span>
+                  <span className="text-[11px]" style={{ color: 'var(--faint)' }}>
+                    de descanso
+                  </span>
+                </ProgressRing>
               </div>
 
               <div className="mb-4 flex items-baseline justify-between text-[12px]">
@@ -288,31 +278,18 @@ export function PlaygroundPage(): React.JSX.Element {
               )}
 
               {/*
-                O cronometro e a leitura em segundos do mesmo relogio que desenha
-                a barra: nao ha play nem pause, o tempo corre porque o horario da
-                tarefa esta correndo.
+                O anel e o cronometro sao a mesma leitura do relogio: nao ha play
+                nem pause, o tempo corre porque o horario da tarefa esta correndo.
               */}
-              <div className="mb-4 flex items-baseline justify-center gap-2">
-                <span className="text-[44px] leading-none font-semibold tabular-nums">
-                  {formatCountdown(restante)}
-                </span>
-                <span className="text-[12px]" style={{ color: 'var(--faint)' }}>
-                  restantes
-                </span>
-              </div>
-
-              {/* Barra do tempo decorrido do bloco. */}
-              <div
-                className="mb-2 h-2 w-full overflow-hidden rounded-full"
-                style={{ backgroundColor: 'var(--border)' }}
-              >
-                <div
-                  className="h-full rounded-full transition-[width] duration-1000"
-                  style={{
-                    width: `${progressOf(current)}%`,
-                    backgroundColor: 'var(--accent-base)'
-                  }}
-                />
+              <div className="mb-5 flex justify-center">
+                <ProgressRing progress={progressOf(current, agora)}>
+                  <span className="text-[34px] leading-none font-semibold tabular-nums">
+                    {formatCountdown(restante)}
+                  </span>
+                  <span className="text-[11px]" style={{ color: 'var(--faint)' }}>
+                    restantes
+                  </span>
+                </ProgressRing>
               </div>
 
               <div className="mb-5 flex items-baseline justify-between text-[12px]">
