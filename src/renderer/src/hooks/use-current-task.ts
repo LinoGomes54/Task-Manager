@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useTasks } from './use-tasks'
 import {
   buildDaySchedule,
+  blocksInWindow,
   currentBlock,
   nextBlock,
   dayRange,
+  daySearchRange,
   type TaskBlock
 } from '@shared/agenda'
 
@@ -22,7 +24,10 @@ export function useCurrentTask(): {
   isLoading: boolean
 } {
   const { from, to } = dayRange()
-  const { data: tasks, isLoading } = useTasks({ from, to, kind: 'task' })
+  // Busca desde ontem e recorta na janela de hoje: sem isso, uma tarefa que
+  // atravessa a meia-noite sumia do dia em que ainda esta acontecendo.
+  const busca = daySearchRange()
+  const { data: tasks, isLoading } = useTasks({ from: busca.from, to: busca.to, kind: 'task' })
   const [, tick] = useState(0)
 
   useEffect(() => {
@@ -30,7 +35,7 @@ export function useCurrentTask(): {
     return () => clearInterval(id)
   }, [])
 
-  const blocks = buildDaySchedule(tasks ?? [])
+  const blocks = blocksInWindow(buildDaySchedule(tasks ?? []), new Date(from), new Date(to))
 
   return {
     current: currentBlock(blocks),

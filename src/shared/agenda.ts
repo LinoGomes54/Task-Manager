@@ -113,6 +113,20 @@ export function progressOf(block: TaskBlock, at: Date = new Date()): number {
   return Math.min(100, Math.max(0, (passou / total) * 100))
 }
 
+/**
+ * Blocos que ocupam alguma parte da janela, incluindo os que comecaram antes dela.
+ *
+ * Filtrar so pelo inicio perdia a tarefa que atravessa a meia-noite: "dormir"
+ * das 23h as 7h comeca ontem, entao as 2h da manha o dia de hoje aparecia vazio
+ * mesmo com a tarefa em andamento. O que decide e a sobreposicao — o bloco toca
+ * a janela se termina depois do inicio dela e comeca antes do fim.
+ */
+export function blocksInWindow(blocks: TaskBlock[], from: Date, to: Date): TaskBlock[] {
+  return blocks.filter(
+    (b) => b.end.getTime() > from.getTime() && b.start.getTime() <= to.getTime()
+  )
+}
+
 /** Limites do dia informado, para filtrar as tarefas daquela data. */
 export function dayRange(date: Date = new Date()): { from: string; to: string } {
   const from = new Date(date)
@@ -120,6 +134,22 @@ export function dayRange(date: Date = new Date()): { from: string; to: string } 
   const to = new Date(date)
   to.setHours(23, 59, 59, 999)
   return { from: from.toISOString(), to: to.toISOString() }
+}
+
+/**
+ * Janela de BUSCA do dia: comeca um dia antes.
+ *
+ * A consulta filtra por `dueAt`, que e o inicio da tarefa. Para nao perder um
+ * bloco que comecou ontem a noite e so termina hoje, buscamos desde ontem e
+ * recortamos depois com `blocksInWindow`. Um dia de folga cobre qualquer duracao
+ * que o formulario aceita (o teto e 10h).
+ */
+export function daySearchRange(date: Date = new Date()): { from: string; to: string } {
+  const { to } = dayRange(date)
+  const from = new Date(date)
+  from.setDate(from.getDate() - 1)
+  from.setHours(0, 0, 0, 0)
+  return { from: from.toISOString(), to }
 }
 
 /* ------------------------------------------------------------------ */
