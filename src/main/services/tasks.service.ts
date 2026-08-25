@@ -1,6 +1,6 @@
 import { queryAll, queryOne, execute, transaction, now, newId, toBool } from '../db/local'
 import { getSettings } from './settings.service'
-import { isFutureRecurrence, FUTURE_RECURRENCE_MESSAGE } from '@shared/task-rules'
+import { completionBlock } from '@shared/task-rules'
 import type {
   Task,
   CreateTaskInput,
@@ -248,13 +248,16 @@ export function toggleComplete(userId: string, id: string): Task {
   const task = getTask(userId, id)
   if (!task) throw new Error('Tarefa não encontrada.')
 
+  const completing = task.status !== 'done'
+
   // A interface ja desabilita o controle; esta checagem existe porque o backend
-  // nao pode confiar em validacao feita do outro lado do IPC.
-  if (isFutureRecurrence(task, getSettings(userId).lockFutureRecurring)) {
-    throw new Error(FUTURE_RECURRENCE_MESSAGE)
+  // nao pode confiar em validacao feita do outro lado do IPC. So vale ao
+  // concluir: reabrir nunca e bloqueado.
+  if (completing) {
+    const bloqueio = completionBlock(task, getSettings(userId).lockFutureRecurring)
+    if (bloqueio) throw new Error(bloqueio)
   }
 
-  const completing = task.status !== 'done'
   const timestamp = now()
 
   execute(
@@ -291,7 +294,12 @@ export function completeExpired(userId: string): Task[] {
   const vencidas = candidatos.filter((task) => {
     const fim =
       new Date(task.dueAt!).getTime() + Math.max(1, task.durationMinutes) * 60_000
-    return fim <= agora
+    if (fim > agora) return false
+
+    // Quem mexeu na tarefa DEPOIS do fim do bloco decidiu algo sobre ela — em
+    // geral reabrindo. Fechar de novo na varredura seguinte anularia a decisao,
+    // e a tarefa voltaria sozinha para "feita" alguns segundos depois.
+    return new Date(task.updatedAt).getTime() <= fim
   })
 
   if (vencidas.length === 0) return []

@@ -27,7 +27,7 @@ import { useCategoryMap } from '@/hooks/use-categories'
 import { useSettings } from '@/hooks/use-settings'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { formatDueDate, isOverdue, RECURRENCE_LABELS } from '@/lib/format'
-import { isFutureRecurrence, FUTURE_RECURRENCE_MESSAGE } from '@shared/task-rules'
+import { completionBlock } from '@shared/task-rules'
 import { cn } from '@/lib/utils'
 import type { Task, TaskPriority } from '@shared/types'
 
@@ -61,7 +61,9 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
   const category = task.categoryId ? categories.get(task.categoryId) : undefined
   const done = task.status === 'done'
   const late = isOverdue(task.dueAt, task.status)
-  const locked = isFutureRecurrence(task, settings?.lockFutureRecurring ?? true)
+  // `null` quando pode concluir; o texto do motivo quando nao pode.
+  const bloqueio = completionBlock(task, settings?.lockFutureRecurring ?? true)
+  const locked = bloqueio !== null
   const priority = PRIORITY_TAG[task.priority]
 
   const hasSubline = Boolean(category) || task.recurrence !== 'none' || Boolean(task.description)
@@ -100,11 +102,11 @@ export function TaskItem({ task }: { task: Task }): React.JSX.Element {
               {/* O span existe porque um controle desabilitado nao dispara os
                   eventos de mouse que o tooltip precisa para abrir. */}
               <span className="relative flex cursor-not-allowed self-start pt-0.5">
-                <Checkbox checked={false} disabled aria-label="Repetição ainda não disponível" />
+                <Checkbox checked={false} disabled aria-label="Ainda não pode ser concluída" />
               </span>
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-64">
-              {FUTURE_RECURRENCE_MESSAGE}
+              {bloqueio}
             </TooltipContent>
           </Tooltip>
         ) : (

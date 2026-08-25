@@ -22,6 +22,7 @@ import {
   dayRange,
   type TaskBlock
 } from '@shared/agenda'
+import { isAutoCompleteRunning, AUTO_COMPLETE_MESSAGE } from '@shared/task-rules'
 import { combineDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { PlanDayDialog } from '@/components/tasks/PlanDayDialog'
@@ -152,13 +153,22 @@ export function PlaygroundPage(): React.JSX.Element {
                 </span>
               </div>
 
-              <Button
-                className="w-full gap-1.5"
-                onClick={() => toggleComplete.mutate(current.task.id)}
-              >
-                <Check className="size-4" />
-                Concluir
-              </Button>
+              {isAutoCompleteRunning(current.task) ? (
+                <p
+                  className="rounded-lg border px-3 py-2.5 text-center text-[12px]"
+                  style={{ color: 'var(--faint)' }}
+                >
+                  {AUTO_COMPLETE_MESSAGE}
+                </p>
+              ) : (
+                <Button
+                  className="w-full gap-1.5"
+                  onClick={() => toggleComplete.mutate(current.task.id)}
+                >
+                  <Check className="size-4" />
+                  Concluir
+                </Button>
+              )}
             </div>
           )}
         </Panel>

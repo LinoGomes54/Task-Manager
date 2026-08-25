@@ -180,6 +180,15 @@ fecha no horário mesmo com o app minimizado na bandeja e a janela fechada. Numa
 recorrente a marcação é herdada pela próxima ocorrência — uma diária de dormir não voltaria
 a exigir o clique já na segunda noite.
 
+**Enquanto o tempo não acaba, a tarefa não pode ser marcada na mão.** A caixa fica
+desabilitada com a explicação no tooltip, o Playground troca o botão *Concluir* pelo motivo
+e o card do header esconde o visto. Marcar antes contradiz o motivo de existir da opção:
+dizer às 2h da manhã que já dormiu as oito horas é uma afirmação falsa que o app aceitaria
+sem questionar. O backend também recusa — a regra vive em `shared/` e vale nos dois lados.
+
+**Reabrir continua liberado**, e a varredura respeita isso: uma tarefa mexida depois do fim
+do bloco não é fechada de novo, senão ela voltaria sozinha para "feita" segundos depois.
+
 O interruptor não aparece em **lembretes**, que não ocupam tempo e por isso não têm um
 fim para disparar a conclusão.
 

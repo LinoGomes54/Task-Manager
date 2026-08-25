@@ -5,6 +5,7 @@ import { useToggleComplete } from '@/hooks/use-tasks'
 import { useCategoryMap } from '@/hooks/use-categories'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { formatHm, minutesLeft, progressOf, formatDuration } from '@shared/agenda'
+import { isAutoCompleteRunning } from '@shared/task-rules'
 import { cn } from '@/lib/utils'
 
 /**
@@ -31,6 +32,9 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
   const categoria = bloco.task.categoryId ? categories.get(bloco.task.categoryId) : undefined
   const restante = minutesLeft(bloco)
   const progresso = emAndamento ? progressOf(bloco) : 0
+  // Sem visto quando a tarefa se fecha sozinha: oferecer o botao e prometer uma
+  // acao que o backend recusa.
+  const podeConcluir = emAndamento && !isAutoCompleteRunning(bloco.task)
 
   return (
     <div
@@ -87,7 +91,7 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
           : `${formatHm(bloco.start)}`}
       </span>
 
-      {emAndamento && (
+      {podeConcluir && (
         <button
           type="button"
           onClick={(event) => {

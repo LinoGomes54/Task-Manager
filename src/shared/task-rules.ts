@@ -31,3 +31,39 @@ export function isFutureRecurrence(task: Task, lockEnabled: boolean): boolean {
 export const FUTURE_RECURRENCE_MESSAGE =
   'Esta repetição ainda não chegou. Você só pode concluí-la a partir do dia do prazo — ' +
   'para mudar isso, desative a trava em Configurações.'
+
+/**
+ * Uma tarefa de conclusao automatica so pode ser marcada depois que o tempo dela
+ * acaba.
+ *
+ * Marcar antes contradiz o proprio motivo de existir da opcao: se voce ligou
+ * "concluir automaticamente" em dormir, dizer as 2h da manha que ja dormiu as
+ * oito horas e uma afirmacao falsa que o app aceitaria sem questionar.
+ *
+ * Reabrir continua liberado — como em toda regra daqui, o bloqueio e so no
+ * sentido de concluir.
+ */
+export function isAutoCompleteRunning(task: Task, at: Date = new Date()): boolean {
+  if (!task.autoComplete) return false
+  if (task.status === 'done') return false
+  if (!task.dueAt) return false
+
+  const fim = new Date(task.dueAt).getTime() + Math.max(1, task.durationMinutes) * 60_000
+  return fim > at.getTime()
+}
+
+export const AUTO_COMPLETE_MESSAGE =
+  'Esta tarefa se conclui sozinha quando o tempo dela acabar. Para marcá-la na mão, ' +
+  'desligue “Concluir automaticamente” na edição da tarefa.'
+
+/**
+ * Motivo pelo qual a tarefa nao pode ser concluida agora, ou `null` se pode.
+ *
+ * Reune as travas num lugar so para que interface e backend nunca discordem
+ * sobre qual delas se aplica — e para o tooltip poder mostrar o motivo certo.
+ */
+export function completionBlock(task: Task, lockFutureRecurring: boolean): string | null {
+  if (isFutureRecurrence(task, lockFutureRecurring)) return FUTURE_RECURRENCE_MESSAGE
+  if (isAutoCompleteRunning(task)) return AUTO_COMPLETE_MESSAGE
+  return null
+}
