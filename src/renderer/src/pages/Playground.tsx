@@ -8,14 +8,13 @@ import { PageHeader } from '@/components/PageHeader'
 import { Panel } from '@/components/Panel'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { useCurrentTask } from '@/hooks/use-current-task'
+import { useCountdown, formatCountdown } from '@/hooks/use-countdown'
 import { useToggleComplete, useTasks } from '@/hooks/use-tasks'
 import { useCategoryMap } from '@/hooks/use-categories'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 import {
   formatHm,
   formatDuration,
-  minutesLeft,
-  minutesLeftIn,
   progressOf,
   progressBetween,
   gapsBetween,
@@ -58,6 +57,10 @@ export function PlaygroundPage(): React.JSX.Element {
   // Estar em descanso e um estado do dia: quando nenhum bloco esta correndo, a
   // folga que contem o agora e o que responde "e agora, o que eu faco?".
   const descanso = current ? null : currentGap(blocks, agora)
+
+  // Um cronometro so, apontado para o que estiver correndo agora. Hooks nao podem
+  // ficar dentro de condicional, entao o alvo e que muda — nao a chamada.
+  const restante = useCountdown(current?.end ?? descanso?.end ?? null)
   const minutosPlanejados = totalMinutes(blocks)
   const sobreposto = hasOverlap(blocks)
 
@@ -117,6 +120,15 @@ export function PlaygroundPage(): React.JSX.Element {
                 </div>
               </div>
 
+              <div className="mb-4 flex items-baseline justify-center gap-2">
+                <span className="text-[44px] leading-none font-semibold tabular-nums">
+                  {formatCountdown(restante)}
+                </span>
+                <span className="text-[12px]" style={{ color: 'var(--faint)' }}>
+                  de descanso
+                </span>
+              </div>
+
               {/* Mesma barra do bloco de trabalho: o descanso tambem tem inicio,
                   fim e um quanto-ja-passou. */}
               <div
@@ -134,10 +146,8 @@ export function PlaygroundPage(): React.JSX.Element {
 
               <div className="mb-4 flex items-baseline justify-between text-[12px]">
                 <span style={{ color: 'var(--faint)' }}>
-                  faltam{' '}
-                  <span className="font-mono">
-                    {formatDuration(minutesLeftIn(descanso, agora))}
-                  </span>
+                  pausa de{' '}
+                  <span className="font-mono">{formatDuration(descanso.minutes)}</span>
                 </span>
                 <span style={{ color: 'var(--faint)' }}>
                   volta às <span className="font-mono">{formatHm(descanso.end)}</span>
@@ -220,6 +230,20 @@ export function PlaygroundPage(): React.JSX.Element {
                 </p>
               )}
 
+              {/*
+                O cronometro e a leitura em segundos do mesmo relogio que desenha
+                a barra: nao ha play nem pause, o tempo corre porque o horario da
+                tarefa esta correndo.
+              */}
+              <div className="mb-4 flex items-baseline justify-center gap-2">
+                <span className="text-[44px] leading-none font-semibold tabular-nums">
+                  {formatCountdown(restante)}
+                </span>
+                <span className="text-[12px]" style={{ color: 'var(--faint)' }}>
+                  restantes
+                </span>
+              </div>
+
               {/* Barra do tempo decorrido do bloco. */}
               <div
                 className="mb-2 h-2 w-full overflow-hidden rounded-full"
@@ -236,7 +260,12 @@ export function PlaygroundPage(): React.JSX.Element {
 
               <div className="mb-5 flex items-baseline justify-between text-[12px]">
                 <span style={{ color: 'var(--faint)' }}>
-                  faltam <span className="font-mono">{formatDuration(minutesLeft(current))}</span>
+                  bloco de{' '}
+                  <span className="font-mono">
+                    {formatDuration(
+                      Math.round((current.end.getTime() - current.start.getTime()) / 60_000)
+                    )}
+                  </span>
                 </span>
                 <span style={{ color: 'var(--faint)' }}>
                   termina às <span className="font-mono">{formatHm(current.end)}</span>

@@ -212,6 +212,32 @@ As duas leituras de "recolher" são legítimas — liberar a tela ou manter o me
 então é escolha, não regra. O botão de expandir aparece no cabeçalho nos dois casos, para a
 barra nunca ficar sem volta.
 
+### Cronômetro no Playground
+
+O painel **Agora** mostra a contagem regressiva do que está acontecendo, em segundos:
+
+```
+Academia
+08:28 às 09:28 · 1h
+
+            49:53  restantes
+
+bloco de 1h              termina às 09:28
+```
+
+Durante uma pausa o mesmo número conta o descanso (`4:12 de descanso`).
+
+**Não há play nem pause, de propósito.** O que manda é o relógio: a tarefa começa e termina no
+horário que ela tem, e um cronômetro manual passaria a mentir no instante em que alguém
+esquecesse de apertar o botão. É a leitura em segundos do mesmo relógio que desenha a barra
+de progresso.
+
+O pulso aqui é de 1 segundo — diferente do resto do app, que bate a cada 15 — porque o segundo
+é o que está na tela: um cronômetro que trava por quinze segundos e depois pula parece
+quebrado. Cada tique recalcula a partir do relógio em vez de decrementar um contador: com a
+janela em segundo plano o Chromium atrasa os timers, e um contador decrescido perderia
+segundos que nunca voltariam.
+
 ### Descanso no Playground
 
 Quando o relógio cai numa folga, o painel **Agora** mostra o descanso em vez de dizer que não
