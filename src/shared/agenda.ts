@@ -27,6 +27,22 @@ export interface GapBlock {
   start: Date
   end: Date
   minutes: number
+  /** Bloco que termina onde a folga comeca. */
+  before: TaskBlock
+  /** Bloco que comeca onde a folga acaba. */
+  after: TaskBlock
+}
+
+/**
+ * `true` quando a folga esta **dentro** de uma tarefa dividida em ciclos.
+ *
+ * Serve para o app nomear o intervalo: entre dois ciclos de "Estudar" e o
+ * descanso do proprio estudo; entre tarefas diferentes e so tempo livre. Chamar
+ * os dois da mesma coisa perderia a diferenca entre "volto ao que eu estava
+ * fazendo" e "acabou, agora e outra coisa".
+ */
+export function isCycleBreak(gap: GapBlock): boolean {
+  return gap.before.task.id === gap.after.task.id
 }
 
 export function blockOf(task: Task): TaskBlock | null {
@@ -113,6 +129,25 @@ export function nextBlock(blocks: TaskBlock[], at: Date = new Date()): TaskBlock
   return blocks.find((b) => b.task.status !== 'done' && b.start.getTime() > agora) ?? null
 }
 
+/**
+ * A folga que esta acontecendo agora, se houver.
+ *
+ * Estar em descanso e um estado do dia como qualquer outro: sem isso, o intervalo
+ * entre dois ciclos de estudo aparecia como "nada agendado", que le como "o dia
+ * acabou" quando na verdade faltam oito minutos para voltar.
+ *
+ * So conta folga **entre** blocos. O tempo antes do primeiro e depois do ultimo
+ * nao e descanso — e o dia ainda nao ter comecado, ou ja ter terminado.
+ */
+export function currentGap(blocks: TaskBlock[], at: Date = new Date()): GapBlock | null {
+  const agora = at.getTime()
+  return (
+    gapsBetween(blocks).find(
+      (g) => agora >= g.start.getTime() && agora < g.end.getTime()
+    ) ?? null
+  )
+}
+
 /** Folgas entre um bloco e o seguinte, para a linha do tempo mostrar os vazios. */
 export function gapsBetween(blocks: TaskBlock[]): GapBlock[] {
   const gaps: GapBlock[] = []
@@ -120,7 +155,15 @@ export function gapsBetween(blocks: TaskBlock[]): GapBlock[] {
     const fim = blocks[i].end
     const proximo = blocks[i + 1].start
     const minutos = Math.round((proximo.getTime() - fim.getTime()) / 60_000)
-    if (minutos > 0) gaps.push({ start: fim, end: proximo, minutes: minutos })
+    if (minutos > 0) {
+      gaps.push({
+        start: fim,
+        end: proximo,
+        minutes: minutos,
+        before: blocks[i],
+        after: blocks[i + 1]
+      })
+    }
   }
   return gaps
 }
@@ -166,12 +209,22 @@ export function minutesLeft(block: TaskBlock, at: Date = new Date()): number {
   return Math.max(0, Math.ceil((block.end.getTime() - at.getTime()) / 60_000))
 }
 
+/** Quanto de um intervalo ja passou, de 0 a 100. */
+export function progressBetween(start: Date, end: Date, at: Date = new Date()): number {
+  const total = end.getTime() - start.getTime()
+  if (total <= 0) return 0
+  const passou = at.getTime() - start.getTime()
+  return Math.min(100, Math.max(0, (passou / total) * 100))
+}
+
 /** Quanto do bloco ja passou, de 0 a 100. */
 export function progressOf(block: TaskBlock, at: Date = new Date()): number {
-  const total = block.end.getTime() - block.start.getTime()
-  if (total <= 0) return 0
-  const passou = at.getTime() - block.start.getTime()
-  return Math.min(100, Math.max(0, (passou / total) * 100))
+  return progressBetween(block.start, block.end, at)
+}
+
+/** Minutos que faltam para a folga acabar. */
+export function minutesLeftIn(gap: GapBlock, at: Date = new Date()): number {
+  return Math.max(0, Math.ceil((gap.end.getTime() - at.getTime()) / 60_000))
 }
 
 /**

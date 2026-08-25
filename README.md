@@ -198,6 +198,31 @@ sozinhas como espaço vazio, o mesmo que a linha do dia já usa para qualquer in
 
 Quatro horas de estudo seguidas não existem na prática, e a agenda não deveria fingir que sim.
 
+### Descanso no Playground
+
+Quando o relógio cai numa folga, o painel **Agora** mostra o descanso em vez de dizer que não
+há nada agendado:
+
+```
+Descanso do ciclo
+08:18 às 08:28 · 10min
+faltam 5min                     volta às 08:28
+depois   Estudar 2/3                     08:28
+```
+
+Estar em descanso é um estado do dia como qualquer outro. Sem isso, o intervalo entre dois
+ciclos de estudo aparecia como "nada agendado", que se lê como *o dia acabou* quando na
+verdade faltam cinco minutos para voltar.
+
+O título distingue os dois casos: **Descanso do ciclo** quando a folga está dentro de uma
+tarefa dividida (volto ao que eu estava fazendo) e **Descanso** entre tarefas diferentes
+(acabou, agora é outra coisa). Na linha do dia, a folga em curso fica destacada com
+`· agora`.
+
+Só conta folga **entre** blocos. O tempo antes do primeiro e depois do último não é descanso
+— é o dia ainda não ter começado, ou já ter terminado; aí a mensagem continua sendo
+"Nada agendado para agora".
+
 ### Conclusão automática
 
 No formulário da tarefa, junto da duração, o interruptor **Concluir automaticamente**

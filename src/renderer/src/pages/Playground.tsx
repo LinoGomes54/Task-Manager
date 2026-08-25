@@ -15,8 +15,12 @@ import {
   formatHm,
   formatDuration,
   minutesLeft,
+  minutesLeftIn,
   progressOf,
+  progressBetween,
   gapsBetween,
+  currentGap,
+  isCycleBreak,
   totalMinutes,
   hasOverlap,
   dayRange,
@@ -51,6 +55,9 @@ export function PlaygroundPage(): React.JSX.Element {
   const inicioDoDia = new Date(agora)
   inicioDoDia.setHours(0, 0, 0, 0)
   const gaps = gapsBetween(blocks)
+  // Estar em descanso e um estado do dia: quando nenhum bloco esta correndo, a
+  // folga que contem o agora e o que responde "e agora, o que eu faco?".
+  const descanso = current ? null : currentGap(blocks, agora)
   const minutosPlanejados = totalMinutes(blocks)
   const sobreposto = hasOverlap(blocks)
 
@@ -85,10 +92,78 @@ export function PlaygroundPage(): React.JSX.Element {
       />
 
       <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
-        <Panel title="Agora" meta={current ? formatHm(agora) : undefined}>
+        <Panel title="Agora" meta={current || descanso ? formatHm(agora) : undefined}>
           {isLoading && <Skeleton className="h-40 w-full rounded-xl" />}
 
-          {!isLoading && !current && (
+          {!isLoading && !current && descanso && (
+            <div className="py-2">
+              <div className="mb-4 flex items-start gap-3">
+                <span
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg border"
+                  style={{ color: 'var(--accent-base)' }}
+                >
+                  <Coffee className="size-4" />
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-[19px] leading-tight font-semibold">
+                    {isCycleBreak(descanso) ? 'Descanso do ciclo' : 'Descanso'}
+                  </p>
+                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--faint)' }}>
+                    <span className="font-mono">{formatHm(descanso.start)}</span> às{' '}
+                    <span className="font-mono">{formatHm(descanso.end)}</span> ·{' '}
+                    {formatDuration(descanso.minutes)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mesma barra do bloco de trabalho: o descanso tambem tem inicio,
+                  fim e um quanto-ja-passou. */}
+              <div
+                className="mb-2 h-2 w-full overflow-hidden rounded-full"
+                style={{ backgroundColor: 'var(--border)' }}
+              >
+                <div
+                  className="h-full rounded-full transition-[width] duration-1000"
+                  style={{
+                    width: `${progressBetween(descanso.start, descanso.end, agora)}%`,
+                    backgroundColor: 'var(--accent-base)'
+                  }}
+                />
+              </div>
+
+              <div className="mb-4 flex items-baseline justify-between text-[12px]">
+                <span style={{ color: 'var(--faint)' }}>
+                  faltam{' '}
+                  <span className="font-mono">
+                    {formatDuration(minutesLeftIn(descanso, agora))}
+                  </span>
+                </span>
+                <span style={{ color: 'var(--faint)' }}>
+                  volta às <span className="font-mono">{formatHm(descanso.end)}</span>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2.5 rounded-lg border px-3 py-2.5">
+                <span className="shrink-0 text-[11px]" style={{ color: 'var(--faint)' }}>
+                  depois
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
+                  {descanso.after.task.title}
+                  {descanso.after.cycle && (
+                    <span className="ml-1.5 font-mono text-[11px]" style={{ color: 'var(--faint)' }}>
+                      {descanso.after.cycle.index}/{descanso.after.cycle.total}
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 font-mono text-[11.5px]" style={{ color: 'var(--faint)' }}>
+                  {formatHm(descanso.after.start)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !current && !descanso && (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Coffee className="mb-2 size-7" style={{ color: 'var(--faint)' }} />
               <p className="text-[13px] font-medium">Nada agendado para agora</p>
@@ -212,15 +287,29 @@ export function PlaygroundPage(): React.JSX.Element {
 
               return (
                 <div key={block.task.id}>
-                  {folga > 0 && (
-                    <p
-                      className="flex items-center gap-1.5 py-1 pl-[52px] text-[11px]"
-                      style={{ color: 'var(--faint)' }}
-                    >
-                      <Coffee className="size-3" />
-                      {formatDuration(folga)} livre
-                    </p>
-                  )}
+                  {folga > 0 &&
+                    (() => {
+                      // A folga que termina onde este bloco comeca e a que esta
+                      // acontecendo agora — as folgas sao identificadas pelo bloco
+                      // seguinte, entao comparar o fim com o inicio basta.
+                      const agoraNaFolga = descanso?.end.getTime() === block.start.getTime()
+
+                      return (
+                        <p
+                          className={cn(
+                            'flex items-center gap-1.5 py-1 pl-[52px] text-[11px]',
+                            agoraNaFolga && 'font-semibold'
+                          )}
+                          style={{
+                            color: agoraNaFolga ? 'var(--accent-base)' : 'var(--faint)'
+                          }}
+                        >
+                          <Coffee className="size-3" />
+                          {formatDuration(folga)} livre
+                          {agoraNaFolga && ' · agora'}
+                        </p>
+                      )
+                    })()}
 
                   <div
                     className={cn(
