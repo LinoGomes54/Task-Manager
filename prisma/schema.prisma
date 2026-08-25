@@ -72,6 +72,7 @@ model Task {
   parentTaskId        String?   @map("parent_task_id")
   kind                String    @default("task")
   durationMinutes     Int       @default(25) @map("duration_minutes")
+  autoComplete        Boolean   @default(false) @map("auto_complete")
   agendaDate          String?   @map("agenda_date")
   agendaPosition      Int       @default(0) @map("agenda_position")
   createdAt           DateTime  @map("created_at") @db.Timestamptz(6)

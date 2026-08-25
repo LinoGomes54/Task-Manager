@@ -59,6 +59,14 @@ export interface Task {
   /** Quanto tempo a tarefa ocupa na agenda do dia, em minutos. */
   durationMinutes: number
   /**
+   * Marca a tarefa como feita sozinha quando o bloco dela termina.
+   *
+   * Existe para o que passa por si: dormir, descanso, uma pausa. Ninguem abre o
+   * app as 3h da manha para confirmar que dormiu — sem isso essas tarefas ficam
+   * eternamente em aberto e sujam o painel de pendencias.
+   */
+  autoComplete: boolean
+  /**
    * Dia em que a tarefa foi colocada na agenda (`YYYY-MM-DD`), ou `null` se nao
    * esta agendada. E separado de `dueAt` de proposito: o prazo diz *quando
    * vence*, a agenda diz *quando eu vou fazer*.
@@ -113,6 +121,7 @@ export interface CreateTaskInput {
   recurrenceUntil?: string | null
   kind?: TaskKind
   durationMinutes?: number
+  autoComplete?: boolean
   agendaDate?: string | null
   agendaPosition?: number
 }

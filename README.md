@@ -165,6 +165,24 @@ Duas coisas continuam liberadas de propósito:
 
 Para desligar, vá em **Configurações → Tarefas recorrentes**. A trava vem ligada.
 
+### Conclusão automática
+
+No formulário da tarefa, junto da duração, o interruptor **Concluir automaticamente**
+faz a tarefa se marcar como feita quando o tempo dela acaba. A legenda mostra o horário
+exato: *"Marca como feita às 07:00, sem você precisar clicar"*.
+
+Serve para o que passa por si — dormir, descanso, pausas. Ninguém abre o app às 7h da
+manhã para confirmar que dormiu, e sem isso essas tarefas ficariam pendentes para sempre
+inflando o contador de atrasadas.
+
+A varredura roda no **processo principal**, a cada 30 segundos, junto do alarme: a tarefa
+fecha no horário mesmo com o app minimizado na bandeja e a janela fechada. Numa tarefa
+recorrente a marcação é herdada pela próxima ocorrência — uma diária de dormir não voltaria
+a exigir o clique já na segunda noite.
+
+O interruptor não aparece em **lembretes**, que não ocupam tempo e por isso não têm um
+fim para disparar a conclusão.
+
 ### Calendário e tarefas do mês
 
 O calendário mostra o mês inteiro. Cada dia exibe pontinhos coloridos — um por tarefa,

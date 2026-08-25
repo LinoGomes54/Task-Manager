@@ -1,5 +1,5 @@
 import { Notification, BrowserWindow } from 'electron'
-import { findTasksToNotify, markNotified } from './services/tasks.service'
+import { completeExpired, findTasksToNotify, markNotified } from './services/tasks.service'
 import { getSettings } from './services/settings.service'
 import { getSessionUserId } from './session'
 import { EVENTS } from '@shared/channels'
@@ -38,6 +38,19 @@ function formatDue(dueAt: string | null): string {
 function tick(): void {
   const userId = getSessionUserId()
   if (!userId) return
+
+  // Fecha as tarefas de conclusao automatica cujo tempo acabou. Vem antes das
+  // notificacoes e fora do `notificationsEnabled`: desligar os avisos nao deveria
+  // deixar "dormir" pendente para sempre.
+  try {
+    if (completeExpired(userId).length > 0) {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send(EVENTS.dataChanged)
+      }
+    }
+  } catch {
+    // Uma falha aqui nao pode impedir o alarme de rodar.
+  }
 
   let settings: ReturnType<typeof getSettings>
   try {

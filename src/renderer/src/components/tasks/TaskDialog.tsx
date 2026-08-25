@@ -76,6 +76,8 @@ interface FormState {
   monthDay: number
   /** Quanto tempo a tarefa ocupa, em minutos. */
   durationMinutes: number
+  /** Fecha a tarefa sozinha quando o bloco termina. */
+  autoComplete: boolean
   kind: TaskKind
 }
 
@@ -97,6 +99,7 @@ const EMPTY: FormState = {
   recurrenceWeekdays: [],
   monthDay: new Date().getDate(),
   durationMinutes: 25,
+  autoComplete: false,
   kind: 'task'
 }
 
@@ -132,6 +135,7 @@ export function TaskDialog(): React.JSX.Element {
         recurrenceWeekdays: editing.recurrenceWeekdays,
         monthDay: editing.dueAt ? parseISO(editing.dueAt).getDate() : new Date().getDate(),
         durationMinutes: editing.durationMinutes,
+        autoComplete: editing.autoComplete,
         kind: editing.kind
       })
       return
@@ -153,6 +157,7 @@ export function TaskDialog(): React.JSX.Element {
       // Uma semanal sem dia marcado nao teria quando acontecer: sugerimos hoje.
       recurrenceWeekdays: suggestedRecurrence === 'weekly' ? [new Date().getDay()] : [],
       durationMinutes: settings?.pomodoroMinutes ?? 25,
+      autoComplete: false,
       kind: defaults?.kind ?? 'task'
     })
   }, [open, editing, defaults])
@@ -192,6 +197,7 @@ export function TaskDialog(): React.JSX.Element {
       recurrenceInterval: Math.max(1, form.recurrenceInterval),
       recurrenceWeekdays: form.recurrence === 'weekly' ? form.recurrenceWeekdays : [],
       durationMinutes: Math.max(1, form.durationMinutes),
+      autoComplete: form.autoComplete,
       kind: form.kind
     }
   }
@@ -583,6 +589,31 @@ export function TaskDialog(): React.JSX.Element {
                         <span className="text-muted-foreground text-xs">min</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/*
+                    Fica junto da duracao porque depende dela: o que fecha a tarefa
+                    e o fim do bloco. Escondido no lembrete, que nao ocupa tempo.
+                  */}
+                  <div
+                    className={cn(
+                      'flex items-center justify-between rounded-lg border p-3',
+                      form.kind === 'reminder' && 'hidden'
+                    )}
+                  >
+                    <div className="space-y-0.5">
+                      <Label htmlFor="auto-complete">Concluir automaticamente</Label>
+                      <p className="text-muted-foreground text-xs">
+                        {termina
+                          ? `Marca como feita às ${termina}, sem você precisar clicar`
+                          : 'Marca como feita quando o tempo acabar — para dormir, descanso e pausas'}
+                      </p>
+                    </div>
+                    <Switch
+                      id="auto-complete"
+                      checked={form.autoComplete}
+                      onCheckedChange={(value) => update('autoComplete', value)}
+                    />
                   </div>
 
                   <div className="grid gap-2">

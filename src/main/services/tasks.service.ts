@@ -50,6 +50,7 @@ function mapTask(row: Row): Task {
     parentTaskId: row.parent_task_id === null ? null : String(row.parent_task_id),
     kind: String(row.kind) as TaskKind,
     durationMinutes: Number(row.duration_minutes),
+    autoComplete: toBool(row.auto_complete),
     agendaDate: row.agenda_date === null ? null : String(row.agenda_date),
     agendaPosition: Number(row.agenda_position),
     createdAt: String(row.created_at),
@@ -141,9 +142,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
-       recurrence_until, parent_task_id, kind, duration_minutes, agenda_date,
-       agenda_position, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 1)`,
+       recurrence_until, parent_task_id, kind, duration_minutes, auto_complete,
+       agenda_date, agenda_position, created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 1)`,
     [
       id,
       userId,
@@ -161,6 +162,7 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
       input.recurrenceUntil ?? null,
       input.kind ?? 'task',
       input.durationMinutes ?? 25,
+      input.autoComplete ?? false,
       input.agendaDate ?? null,
       input.agendaPosition ?? 0,
       timestamp,
@@ -186,6 +188,7 @@ const UPDATABLE = {
   recurrenceUntil: 'recurrence_until',
   kind: 'kind',
   durationMinutes: 'duration_minutes',
+  autoComplete: 'auto_complete',
   agendaDate: 'agenda_date',
   agendaPosition: 'agenda_position'
 } as const
@@ -263,6 +266,49 @@ export function toggleComplete(userId: string, id: string): Task {
   if (completing && task.recurrence !== 'none') createNextOccurrence(userId, task)
 
   return getTask(userId, id)!
+}
+
+/**
+ * Conclui sozinhas as tarefas marcadas para isso cujo bloco ja terminou.
+ *
+ * Roda no processo principal junto com o alarme, e nao no renderer, porque
+ * "dormir das 23h as 7h" precisa ser fechada as 7h mesmo com o app na bandeja e
+ * a janela destruida.
+ *
+ * O corte e o **fim** do bloco (`due_at` + duracao). Tudo numa transacao: a
+ * varredura pode fechar varias tarefas de uma vez, e meia conclusao gravada
+ * deixaria a recorrencia sem a proxima ocorrencia.
+ */
+export function completeExpired(userId: string): Task[] {
+  const candidatos = queryAll<Row>(
+    `SELECT * FROM tasks
+      WHERE user_id = ? AND deleted_at IS NULL AND auto_complete = 1
+        AND status != 'done' AND due_at IS NOT NULL`,
+    [userId]
+  ).map(mapTask)
+
+  const agora = Date.now()
+  const vencidas = candidatos.filter((task) => {
+    const fim =
+      new Date(task.dueAt!).getTime() + Math.max(1, task.durationMinutes) * 60_000
+    return fim <= agora
+  })
+
+  if (vencidas.length === 0) return []
+
+  const timestamp = now()
+  transaction(() => {
+    for (const task of vencidas) {
+      execute(
+        `UPDATE tasks SET status = 'done', completed_at = ?, updated_at = ?, dirty = 1
+          WHERE id = ? AND user_id = ?`,
+        [timestamp, timestamp, task.id, userId]
+      )
+      if (task.recurrence !== 'none') createNextOccurrence(userId, task)
+    }
+  })
+
+  return vencidas.map((task) => getTask(userId, task.id)!).filter(Boolean)
 }
 
 export function toggleImportant(userId: string, id: string): Task {
@@ -347,9 +393,9 @@ function createNextOccurrence(userId: string, task: Task): void {
     `INSERT INTO tasks (
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
-       recurrence_until, parent_task_id, kind, duration_minutes, agenda_date,
-       agenda_position, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
+       recurrence_until, parent_task_id, kind, duration_minutes, auto_complete,
+       agenda_date, agenda_position, created_at, updated_at, dirty
+     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
     [
       newId(),
       userId,
@@ -367,6 +413,9 @@ function createNextOccurrence(userId: string, task: Task): void {
       task.parentTaskId ?? task.id,
       task.kind,
       task.durationMinutes,
+      // A conclusao automatica acompanha a repeticao: uma diaria de dormir que
+      // so fechasse sozinha na primeira noite pediria o clique em todas as outras.
+      task.autoComplete,
       timestamp,
       timestamp
     ]

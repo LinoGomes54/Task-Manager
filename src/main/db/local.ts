@@ -56,6 +56,7 @@ const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition
   { table: 'tasks', column: 'recurrence_weekdays', definition: "TEXT NOT NULL DEFAULT ''" },
   { table: 'tasks', column: 'kind', definition: "TEXT NOT NULL DEFAULT 'task'" },
   { table: 'tasks', column: 'duration_minutes', definition: 'INTEGER NOT NULL DEFAULT 25' },
+  { table: 'tasks', column: 'auto_complete', definition: 'INTEGER NOT NULL DEFAULT 0' },
   { table: 'tasks', column: 'agenda_date', definition: 'TEXT' },
   { table: 'tasks', column: 'agenda_position', definition: 'INTEGER NOT NULL DEFAULT 0' },
   {
