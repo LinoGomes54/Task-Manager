@@ -115,11 +115,23 @@ export function PlaygroundPage(): React.JSX.Element {
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-[19px] leading-tight font-semibold">{current.task.title}</p>
+                  <p className="text-[19px] leading-tight font-semibold">
+                    {current.task.title}
+                    {current.cycle && (
+                      <span
+                        className="ml-2 font-mono text-[13px]"
+                        style={{ color: 'var(--faint)' }}
+                      >
+                        ciclo {current.cycle.index}/{current.cycle.total}
+                      </span>
+                    )}
+                  </p>
                   <p className="mt-1 text-[12.5px]" style={{ color: 'var(--faint)' }}>
                     <span className="font-mono">{formatHm(current.start)}</span> às{' '}
                     <span className="font-mono">{formatHm(current.end)}</span> ·{' '}
-                    {formatDuration(current.task.durationMinutes)}
+                    {formatDuration(
+                      Math.round((current.end.getTime() - current.start.getTime()) / 60_000)
+                    )}
                   </p>
                 </div>
               </div>
@@ -263,13 +275,23 @@ export function PlaygroundPage(): React.JSX.Element {
                       )}
                     >
                       {block.task.title}
+                      {block.cycle && (
+                        <span
+                          className="ml-1.5 font-mono text-[10.5px]"
+                          style={{ color: 'var(--faint)' }}
+                        >
+                          {block.cycle.index}/{block.cycle.total}
+                        </span>
+                      )}
                     </span>
 
                     <span
                       className="shrink-0 font-mono text-[11px]"
                       style={{ color: 'var(--faint)' }}
                     >
-                      {formatDuration(block.task.durationMinutes)}
+                      {formatDuration(
+                        Math.round((block.end.getTime() - block.start.getTime()) / 60_000)
+                      )}
                     </span>
                   </div>
                 </div>

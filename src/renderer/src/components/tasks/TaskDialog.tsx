@@ -78,6 +78,12 @@ interface FormState {
   durationMinutes: number
   /** Fecha a tarefa sozinha quando o bloco termina. */
   autoComplete: boolean
+  /** Folga que vem depois desta tarefa quando o dia e encadeado. */
+  breakAfterMinutes: number
+  /** Divide o tempo da tarefa em ciclos de foco e descanso. */
+  usaCiclos: boolean
+  focusMinutes: number
+  cycleBreakMinutes: number
   kind: TaskKind
 }
 
@@ -100,6 +106,10 @@ const EMPTY: FormState = {
   monthDay: new Date().getDate(),
   durationMinutes: 25,
   autoComplete: false,
+  breakAfterMinutes: 0,
+  usaCiclos: false,
+  focusMinutes: 50,
+  cycleBreakMinutes: 15,
   kind: 'task'
 }
 
@@ -136,6 +146,10 @@ export function TaskDialog(): React.JSX.Element {
         monthDay: editing.dueAt ? parseISO(editing.dueAt).getDate() : new Date().getDate(),
         durationMinutes: editing.durationMinutes,
         autoComplete: editing.autoComplete,
+        breakAfterMinutes: editing.breakAfterMinutes,
+        usaCiclos: editing.focusMinutes > 0,
+        focusMinutes: editing.focusMinutes > 0 ? editing.focusMinutes : 50,
+        cycleBreakMinutes: editing.cycleBreakMinutes > 0 ? editing.cycleBreakMinutes : 15,
         kind: editing.kind
       })
       return
@@ -158,6 +172,10 @@ export function TaskDialog(): React.JSX.Element {
       recurrenceWeekdays: suggestedRecurrence === 'weekly' ? [new Date().getDay()] : [],
       durationMinutes: settings?.pomodoroMinutes ?? 25,
       autoComplete: false,
+      breakAfterMinutes: settings?.breakMinutes ?? 5,
+      usaCiclos: false,
+      focusMinutes: settings?.pomodoroMinutes ?? 50,
+      cycleBreakMinutes: settings?.breakMinutes ?? 15,
       kind: defaults?.kind ?? 'task'
     })
   }, [open, editing, defaults])
@@ -198,6 +216,10 @@ export function TaskDialog(): React.JSX.Element {
       recurrenceWeekdays: form.recurrence === 'weekly' ? form.recurrenceWeekdays : [],
       durationMinutes: Math.max(1, form.durationMinutes),
       autoComplete: form.autoComplete,
+      breakAfterMinutes: Math.max(0, form.breakAfterMinutes),
+      // Ciclos desligados gravam zero: e o que a agenda le como "bloco unico".
+      focusMinutes: form.usaCiclos ? Math.max(1, form.focusMinutes) : 0,
+      cycleBreakMinutes: form.usaCiclos ? Math.max(0, form.cycleBreakMinutes) : 0,
       kind: form.kind
     }
   }
@@ -240,6 +262,18 @@ export function TaskDialog(): React.JSX.Element {
     fim.setHours(h, m || 0, 0, 0)
     fim.setMinutes(fim.getMinutes() + Math.max(1, form.durationMinutes))
     return formatHm(fim)
+  })()
+
+  /**
+   * Previa dos ciclos, para o formulario responder "quantas rodadas isso da?"
+   * antes de salvar.
+   */
+  const ciclos = (() => {
+    if (!form.usaCiclos || form.kind === 'reminder') return null
+    const foco = Math.max(1, form.focusMinutes)
+    if (foco >= form.durationMinutes) return null
+    const passo = foco + Math.max(0, form.cycleBreakMinutes)
+    return Math.ceil(form.durationMinutes / passo)
   })()
 
   /**
@@ -633,6 +667,98 @@ export function TaskDialog(): React.JSX.Element {
                       checked={form.autoComplete}
                       onCheckedChange={(value) => update('autoComplete', value)}
                     />
+                  </div>
+
+                  <div
+                    className={cn(
+                      'grid gap-3 rounded-lg border p-3',
+                      form.kind === 'reminder' && 'hidden'
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="break-after">Descanso depois</Label>
+                        <p className="text-muted-foreground text-xs">
+                          Folga ate a proxima atividade, ao montar o dia
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <Input
+                          id="break-after"
+                          type="number"
+                          min={0}
+                          max={240}
+                          className="w-20"
+                          value={form.breakAfterMinutes}
+                          onChange={(event) =>
+                            update('breakAfterMinutes', Number(event.target.value))
+                          }
+                        />
+                        <span className="text-muted-foreground text-xs">min</span>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="use-cycles">Dividir em ciclos</Label>
+                          <p className="text-muted-foreground text-xs">
+                            {ciclos
+                              ? ciclos +
+                                ' ciclos de ' +
+                                formatDuration(form.focusMinutes) +
+                                ' dentro do tempo da tarefa'
+                              : 'Alterna foco e descanso dentro do tempo da tarefa'}
+                          </p>
+                        </div>
+                        <Switch
+                          id="use-cycles"
+                          checked={form.usaCiclos}
+                          onCheckedChange={(value) => update('usaCiclos', value)}
+                        />
+                      </div>
+
+                      {form.usaCiclos && (
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          <div className="grid gap-1.5">
+                            <Label htmlFor="focus-minutes" className="text-xs">
+                              Foco
+                            </Label>
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                id="focus-minutes"
+                                type="number"
+                                min={1}
+                                max={240}
+                                value={form.focusMinutes}
+                                onChange={(event) =>
+                                  update('focusMinutes', Number(event.target.value))
+                                }
+                              />
+                              <span className="text-muted-foreground text-xs">min</span>
+                            </div>
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor="cycle-break" className="text-xs">
+                              Descanso
+                            </Label>
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                id="cycle-break"
+                                type="number"
+                                min={0}
+                                max={120}
+                                value={form.cycleBreakMinutes}
+                                onChange={(event) =>
+                                  update('cycleBreakMinutes', Number(event.target.value))
+                                }
+                              />
+                              <span className="text-muted-foreground text-xs">min</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid gap-2">

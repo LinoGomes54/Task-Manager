@@ -57,6 +57,9 @@ const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition
   { table: 'tasks', column: 'kind', definition: "TEXT NOT NULL DEFAULT 'task'" },
   { table: 'tasks', column: 'duration_minutes', definition: 'INTEGER NOT NULL DEFAULT 25' },
   { table: 'tasks', column: 'auto_complete', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { table: 'tasks', column: 'break_after_minutes', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { table: 'tasks', column: 'focus_minutes', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { table: 'tasks', column: 'cycle_break_minutes', definition: 'INTEGER NOT NULL DEFAULT 0' },
   { table: 'tasks', column: 'agenda_date', definition: 'TEXT' },
   { table: 'tasks', column: 'agenda_position', definition: 'INTEGER NOT NULL DEFAULT 0' },
   {

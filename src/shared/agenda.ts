@@ -15,6 +15,11 @@ export interface TaskBlock {
   task: Task
   start: Date
   end: Date
+  /**
+   * Posicao do ciclo dentro da tarefa, quando ela e dividida em foco e descanso.
+   * Ausente numa tarefa de bloco unico.
+   */
+  cycle?: { index: number; total: number }
 }
 
 /** Intervalo ocioso entre duas tarefas — so aparece quando ha folga de verdade. */
@@ -33,11 +38,54 @@ export function blockOf(task: Task): TaskBlock | null {
   return { task, start, end }
 }
 
+/**
+ * Blocos de uma tarefa: um so, ou varios quando ela e dividida em ciclos.
+ *
+ * A duracao continua sendo o **intervalo inteiro** — "estudar das 14h as 18h".
+ * Os ciclos recortam esse intervalo em foco e descanso alternados; so o foco
+ * vira bloco, e as folgas entre eles aparecem sozinhas como espaco vazio na
+ * linha do dia, sem precisar de um tipo de bloco proprio.
+ *
+ * O ultimo ciclo e aparado no fim do intervalo, e nunca sobra descanso pendurado
+ * no final: uma folga depois do ultimo foco ja e o tempo livre seguinte.
+ */
+export function blocksOf(task: Task): TaskBlock[] {
+  const unico = blockOf(task)
+  if (!unico) return []
+
+  const foco = Math.floor(task.focusMinutes)
+  const pausa = Math.max(0, Math.floor(task.cycleBreakMinutes))
+  const total = Math.max(1, task.durationMinutes)
+  if (foco <= 0 || foco >= total) return [unico]
+
+  const inicio = unico.start.getTime()
+  const fim = unico.end.getTime()
+  const passo = (foco + pausa) * 60_000
+
+  const blocos: Array<{ start: Date; end: Date }> = []
+  for (let cursor = inicio; cursor < fim; cursor += passo) {
+    const fimDoFoco = Math.min(cursor + foco * 60_000, fim)
+    if (fimDoFoco <= cursor) break
+    blocos.push({ start: new Date(cursor), end: new Date(fimDoFoco) })
+  }
+
+  return blocos.map((b, index) => ({
+    task,
+    start: b.start,
+    end: b.end,
+    cycle: { index: index + 1, total: blocos.length }
+  }))
+}
+
+/** Quantos ciclos de foco a tarefa tem. Um, quando nao ha divisao. */
+export function cycleCount(task: Task): number {
+  return blocksOf(task).length
+}
+
 /** Blocos do dia, em ordem cronologica. Tarefas sem prazo ficam de fora. */
 export function buildDaySchedule(tasks: Task[]): TaskBlock[] {
   return tasks
-    .map(blockOf)
-    .filter((b): b is TaskBlock => b !== null)
+    .flatMap(blocksOf)
     .sort((a, b) => a.start.getTime() - b.start.getTime())
 }
 
@@ -83,8 +131,19 @@ export function hasOverlap(blocks: TaskBlock[]): boolean {
   return false
 }
 
+/**
+ * Tempo efetivamente ocupado pelos blocos.
+ *
+ * Soma a duracao de cada bloco, e nao a da tarefa: com ciclos, uma tarefa aparece
+ * varias vezes, e usar a duracao dela contaria o intervalo inteiro uma vez por
+ * ciclo. O descanso entre ciclos tambem fica de fora, que e o certo — ele nao e
+ * tempo planejado de trabalho.
+ */
 export function totalMinutes(blocks: TaskBlock[]): number {
-  return blocks.reduce((sum, b) => sum + Math.max(1, b.task.durationMinutes), 0)
+  return blocks.reduce(
+    (sum, b) => sum + Math.max(1, Math.round((b.end.getTime() - b.start.getTime()) / 60_000)),
+    0
+  )
 }
 
 export function formatHm(date: Date): string {
@@ -185,8 +244,12 @@ export function chainSchedule(
     const start = new Date(cursor)
     const end = new Date(start.getTime() + minutos * 60_000)
 
+    // O descanso da propria tarefa manda; o valor do dia e so o padrao para quem
+    // nao definiu o seu. Depois da academia se precisa de mais folga do que
+    // depois de responder e-mails, e isso e uma propriedade da atividade.
     const ultimo = index === tasks.length - 1
-    const descanso = ultimo ? 0 : Math.max(0, options.breakMinutes)
+    const proprio = Math.max(0, task.breakAfterMinutes)
+    const descanso = ultimo ? 0 : proprio > 0 ? proprio : Math.max(0, options.breakMinutes)
 
     cursor.setTime(end.getTime() + descanso * 60_000)
     return { task, start, end, breakAfter: descanso }

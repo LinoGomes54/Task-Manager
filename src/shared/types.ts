@@ -67,6 +67,24 @@ export interface Task {
    */
   autoComplete: boolean
   /**
+   * Minutos de folga que vem DEPOIS desta tarefa quando o dia e encadeado.
+   *
+   * Fica na tarefa, e nao so nas configuracoes, porque o descanso que cada
+   * atividade pede e diferente: depois da academia voce precisa de mais do que
+   * depois de responder e-mails.
+   */
+  breakAfterMinutes: number
+  /**
+   * Tamanho do ciclo de foco, em minutos. Zero desliga a divisao em ciclos.
+   *
+   * Com ciclos, o tempo da tarefa deixa de ser um bloco unico e vira foco e
+   * descanso alternados dentro do mesmo intervalo — quatro horas de estudo
+   * seguidas nao existem na pratica, e a agenda nao deveria fingir que sim.
+   */
+  focusMinutes: number
+  /** Descanso entre um ciclo de foco e o proximo. */
+  cycleBreakMinutes: number
+  /**
    * Dia em que a tarefa foi colocada na agenda (`YYYY-MM-DD`), ou `null` se nao
    * esta agendada. E separado de `dueAt` de proposito: o prazo diz *quando
    * vence*, a agenda diz *quando eu vou fazer*.
@@ -122,6 +140,9 @@ export interface CreateTaskInput {
   kind?: TaskKind
   durationMinutes?: number
   autoComplete?: boolean
+  breakAfterMinutes?: number
+  focusMinutes?: number
+  cycleBreakMinutes?: number
   agendaDate?: string | null
   agendaPosition?: number
 }

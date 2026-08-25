@@ -51,6 +51,9 @@ function mapTask(row: Row): Task {
     kind: String(row.kind) as TaskKind,
     durationMinutes: Number(row.duration_minutes),
     autoComplete: toBool(row.auto_complete),
+    breakAfterMinutes: Number(row.break_after_minutes),
+    focusMinutes: Number(row.focus_minutes),
+    cycleBreakMinutes: Number(row.cycle_break_minutes),
     agendaDate: row.agenda_date === null ? null : String(row.agenda_date),
     agendaPosition: Number(row.agenda_position),
     createdAt: String(row.created_at),
@@ -143,8 +146,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
        recurrence_until, parent_task_id, kind, duration_minutes, auto_complete,
+       break_after_minutes, focus_minutes, cycle_break_minutes,
        agenda_date, agenda_position, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 1)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
     [
       id,
       userId,
@@ -163,6 +167,9 @@ export function createTask(userId: string, input: CreateTaskInput): Task {
       input.kind ?? 'task',
       input.durationMinutes ?? 25,
       input.autoComplete ?? false,
+      input.breakAfterMinutes ?? 0,
+      input.focusMinutes ?? 0,
+      input.cycleBreakMinutes ?? 0,
       input.agendaDate ?? null,
       input.agendaPosition ?? 0,
       timestamp,
@@ -189,6 +196,9 @@ const UPDATABLE = {
   kind: 'kind',
   durationMinutes: 'duration_minutes',
   autoComplete: 'auto_complete',
+  breakAfterMinutes: 'break_after_minutes',
+  focusMinutes: 'focus_minutes',
+  cycleBreakMinutes: 'cycle_break_minutes',
   agendaDate: 'agenda_date',
   agendaPosition: 'agenda_position'
 } as const
@@ -402,8 +412,9 @@ function createNextOccurrence(userId: string, task: Task): void {
        id, user_id, category_id, title, description, priority, status, is_important,
        due_at, remind_minutes_before, recurrence, recurrence_interval, recurrence_weekdays,
        recurrence_until, parent_task_id, kind, duration_minutes, auto_complete,
+       break_after_minutes, focus_minutes, cycle_break_minutes,
        agenda_date, agenda_position, created_at, updated_at, dirty
-     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, 1)`,
     [
       newId(),
       userId,
@@ -424,6 +435,9 @@ function createNextOccurrence(userId: string, task: Task): void {
       // A conclusao automatica acompanha a repeticao: uma diaria de dormir que
       // so fechasse sozinha na primeira noite pediria o clique em todas as outras.
       task.autoComplete,
+      task.breakAfterMinutes,
+      task.focusMinutes,
+      task.cycleBreakMinutes,
       timestamp,
       timestamp
     ]

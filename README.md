@@ -165,6 +165,39 @@ Duas coisas continuam liberadas de propósito:
 
 Para desligar, vá em **Configurações → Tarefas recorrentes**. A trava vem ligada.
 
+### Duração, descanso e ciclos
+
+O formulário pergunta **quando a tarefa acaba**, não quanto ela dura — é assim que a agenda
+é pensada: "durmo das 23h às 7h", "academia até as 15h". A duração aparece ao lado, calculada.
+Término menor que o início significa **dia seguinte**, que é justamente o caso de dormir.
+
+Os atalhos (15min / 25min / 50min / 1h) continuam, agora empurrando o horário de término.
+
+**Descanso depois** — quantos minutos de folga vêm depois desta tarefa quando o dia é
+encadeado em *Montar o dia*. Fica na tarefa, e não só nas configurações, porque o descanso
+que cada atividade pede é diferente: depois da academia se precisa de mais do que depois de
+responder e-mails. O valor do dia continua valendo como padrão para quem não definiu o seu.
+
+**Dividir em ciclos** — o tempo da tarefa deixa de ser um bloco único e vira foco e descanso
+alternados. Estudar das 14h às 18h com ciclos de 50/15 vira:
+
+```
+14:00  Estudar 1/4   50min
+       15min livre
+15:05  Estudar 2/4   50min
+       15min livre
+16:10  Estudar 3/4   50min
+       15min livre
+17:15  Estudar 4/4   45min
+```
+
+Os valores de foco e descanso são editáveis por tarefa. O último ciclo é aparado no fim do
+intervalo, e nunca sobra descanso pendurado no final — uma folga depois do último foco já é
+o tempo livre seguinte. As folgas entre ciclos não viram um tipo de bloco próprio: aparecem
+sozinhas como espaço vazio, o mesmo que a linha do dia já usa para qualquer intervalo ocioso.
+
+Quatro horas de estudo seguidas não existem na prática, e a agenda não deveria fingir que sim.
+
 ### Conclusão automática
 
 No formulário da tarefa, junto da duração, o interruptor **Concluir automaticamente**
