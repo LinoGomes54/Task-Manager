@@ -103,6 +103,7 @@ model UserSettings {
   pomodoroMinutes      Int       @default(25) @map("pomodoro_minutes")
   breakMinutes         Int       @default(5) @map("break_minutes")
   agendaStartTime      String    @default("09:00") @map("agenda_start_time")
+  miniSidebar         Boolean   @default(false) @map("mini_sidebar")
   createdAt            DateTime  @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime  @map("updated_at") @db.Timestamptz(6)
   deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)

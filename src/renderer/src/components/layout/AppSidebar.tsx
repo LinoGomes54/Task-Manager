@@ -70,7 +70,12 @@ export function AppSidebar(): React.JSX.Element {
   const collapsed = state === 'collapsed'
 
   return (
-    <Sidebar collapsible="icon">
+    /*
+      `offcanvas` some por completo; `icon` deixa a regua de icones. A escolha e do
+      usuario porque as duas leituras de "recolher" sao legitimas: liberar a tela
+      inteira, ou manter a navegacao ao alcance.
+    */
+    <Sidebar collapsible={settings?.miniSidebar ? 'icon' : 'offcanvas'}>
       <SidebarHeader className="gap-3">
         <div className="flex items-center gap-2.5 px-1">
           <div

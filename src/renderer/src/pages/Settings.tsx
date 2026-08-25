@@ -275,6 +275,16 @@ export function SettingsPage(): React.JSX.Element {
 
             <Separator />
 
+            <Row
+              id="mini-sidebar"
+              label="Mini sidebar"
+              hint="Ao recolher, a barra fica só com os ícones em vez de sumir."
+              checked={settings.miniSidebar}
+              onChange={(value) => patch({ miniSidebar: value })}
+            />
+
+            <Separator />
+
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <Label>Densidade</Label>

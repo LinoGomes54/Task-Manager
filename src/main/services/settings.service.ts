@@ -19,6 +19,7 @@ function mapSettings(row: Row): AppSettings {
     pomodoroMinutes: Number(row.pomodoro_minutes),
     breakMinutes: Number(row.break_minutes),
     agendaStartTime: String(row.agenda_start_time),
+    miniSidebar: toBool(row.mini_sidebar),
     updatedAt: String(row.updated_at)
   }
 }
@@ -54,7 +55,8 @@ const EDITABLE = {
   accentColor: 'accent_color',
   pomodoroMinutes: 'pomodoro_minutes',
   breakMinutes: 'break_minutes',
-  agendaStartTime: 'agenda_start_time'
+  agendaStartTime: 'agenda_start_time',
+  miniSidebar: 'mini_sidebar'
 } as const
 
 export function updateSettings(userId: string, patch: Partial<AppSettings>): AppSettings {

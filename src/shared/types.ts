@@ -129,6 +129,14 @@ export interface AppSettings {
   breakMinutes: number
   /** Horario em que a agenda do dia comeca (`HH:mm`). */
   agendaStartTime: string
+  /**
+   * Ao recolher, a barra lateral encolhe para a regua de icones em vez de sumir.
+   *
+   * Desligado por padrao: quem recolhe a barra costuma querer a tela inteira
+   * para o conteudo, e uma faixa de icones continua ocupando largura. Quem usa a
+   * barra o tempo todo para navegar prefere o contrario, e por isso e uma opcao.
+   */
+  miniSidebar: boolean
   updatedAt: string
 }
 

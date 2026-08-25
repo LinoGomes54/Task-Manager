@@ -198,6 +198,20 @@ sozinhas como espaço vazio, o mesmo que a linha do dia já usa para qualquer in
 
 Quatro horas de estudo seguidas não existem na prática, e a agenda não deveria fingir que sim.
 
+### Mini sidebar
+
+Em **Configurações → Aparência**, o interruptor **Mini sidebar** decide o que acontece ao
+recolher a barra lateral (Ctrl+B ou o botão no topo dela):
+
+| | Recolhida |
+|---|---|
+| Desligado (padrão) | A barra some por completo e o conteúdo usa a tela inteira |
+| Ligado | Sobra a régua de 48px com os ícones, e a navegação continua ao alcance |
+
+As duas leituras de "recolher" são legítimas — liberar a tela ou manter o menu por perto —
+então é escolha, não regra. O botão de expandir aparece no cabeçalho nos dois casos, para a
+barra nunca ficar sem volta.
+
 ### Descanso no Playground
 
 Quando o relógio cai numa folga, o painel **Agora** mostra o descanso em vez de dizer que não

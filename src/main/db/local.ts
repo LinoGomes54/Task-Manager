@@ -72,7 +72,8 @@ const LOCAL_COLUMN_MIGRATIONS: Array<{ table: string; column: string; definition
     table: 'user_settings',
     column: 'agenda_start_time',
     definition: "TEXT NOT NULL DEFAULT '09:00'"
-  }
+  },
+  { table: 'user_settings', column: 'mini_sidebar', definition: 'INTEGER NOT NULL DEFAULT 0' }
 ]
 
 function runLocalMigrations(conn: DatabaseSync): void {

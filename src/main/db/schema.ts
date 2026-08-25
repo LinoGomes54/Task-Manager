@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   pomodoro_minutes      INTEGER NOT NULL DEFAULT 25,
   break_minutes         INTEGER NOT NULL DEFAULT 5,
   agenda_start_time     TEXT NOT NULL DEFAULT '09:00',
+  mini_sidebar          INTEGER NOT NULL DEFAULT 0,
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   deleted_at            TEXT,
@@ -187,6 +188,7 @@ export const SYNC_COLUMNS: Record<SyncTable, string[]> = {
     'pomodoro_minutes',
     'break_minutes',
     'agenda_start_time',
+    'mini_sidebar',
     'created_at',
     'updated_at',
     'deleted_at'
