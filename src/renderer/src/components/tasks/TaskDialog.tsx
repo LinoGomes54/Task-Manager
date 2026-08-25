@@ -175,7 +175,8 @@ export function TaskDialog(): React.JSX.Element {
             time: form.dueTime,
             weekdays: form.recurrenceWeekdays,
             monthDay: form.monthDay,
-            date: form.dueDate
+            date: form.dueDate,
+            durationMinutes: form.durationMinutes
           }))
 
     return {

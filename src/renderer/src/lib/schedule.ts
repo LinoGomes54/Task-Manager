@@ -42,8 +42,14 @@ function withTime(date: Date, time: string): Date {
 /**
  * Primeira ocorrencia de uma tarefa repetida.
  *
- * Sempre no futuro: se o horario de hoje ja passou, cai na proxima data valida.
- * Sem isso, uma tarefa diaria criada as 18h com horario das 9h nasceria atrasada.
+ * Nunca nasce ja encerrada: se a ocorrencia de hoje ja **terminou**, cai na
+ * proxima data valida. Sem isso, uma tarefa diaria criada as 18h com horario das
+ * 9h nasceria atrasada.
+ *
+ * O corte e o fim da ocorrencia, e nao o inicio, porque uma tarefa que comecou
+ * ha dez minutos e dura uma hora ainda esta acontecendo. Comparando com o
+ * inicio, criar "academia das 22:26" as 22:36 jogava a academia para amanha e o
+ * dia de hoje ficava vazio — a agenda nao mostrava o que estava em andamento.
  */
 export function firstOccurrence(options: {
   rule: RecurrenceRule
@@ -51,14 +57,20 @@ export function firstOccurrence(options: {
   weekdays: number[]
   monthDay: number
   date?: Date
+  durationMinutes?: number
 }): string | null {
-  const { rule, time, weekdays, monthDay, date } = options
+  const { rule, time, weekdays, monthDay, date, durationMinutes } = options
   const agora = new Date()
+  const duracaoMs = Math.max(1, durationMinutes ?? 1) * 60_000
+
+  /** A ocorrencia ainda vale se o bloco dela nao acabou. */
+  const aindaVale = (inicio: Date): boolean =>
+    inicio.getTime() + duracaoMs > agora.getTime()
 
   switch (rule) {
     case 'daily': {
       const hoje = withTime(agora, time)
-      if (hoje.getTime() > agora.getTime()) return hoje.toISOString()
+      if (aindaVale(hoje)) return hoje.toISOString()
       const amanha = new Date(hoje)
       amanha.setDate(amanha.getDate() + 1)
       return amanha.toISOString()
@@ -68,14 +80,14 @@ export function firstOccurrence(options: {
       const dias = [...new Set(weekdays)].sort((a, b) => a - b)
       if (dias.length === 0) return withTime(agora, time).toISOString()
 
-      // Procura, a partir de hoje, o primeiro dia marcado que ainda nao passou.
+      // Procura, a partir de hoje, o primeiro dia marcado que ainda nao acabou.
       for (let offset = 0; offset < 8; offset++) {
         const candidato = new Date(agora)
         candidato.setDate(candidato.getDate() + offset)
         if (!dias.includes(candidato.getDay())) continue
 
         const comHorario = withTime(candidato, time)
-        if (comHorario.getTime() > agora.getTime()) return comHorario.toISOString()
+        if (aindaVale(comHorario)) return comHorario.toISOString()
       }
       return null
     }
@@ -89,7 +101,7 @@ export function firstOccurrence(options: {
         alvo.setDate(Math.min(dia, ultimoDia))
 
         const comHorario = withTime(alvo, time)
-        if (comHorario.getTime() > agora.getTime()) return comHorario.toISOString()
+        if (aindaVale(comHorario)) return comHorario.toISOString()
       }
       return null
     }
