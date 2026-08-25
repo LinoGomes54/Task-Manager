@@ -226,8 +226,13 @@ export function TaskDialog(): React.JSX.Element {
   // Uma semanal sem nenhum dia marcado nao tem quando acontecer.
   const semDiaMarcado = form.recurrence === 'weekly' && form.recurrenceWeekdays.length === 0
 
-  // Horario de termino, mostrado ao lado da duracao: e o que responde na hora
-  // "se comeco as 14h e levo uma hora, quando acaba?".
+  /**
+   * O formulario pergunta **quando acaba**, e nao quanto dura.
+   *
+   * E assim que a agenda e pensada: "durmo das 23h as 7h", "academia ate as 15h".
+   * A duracao continua sendo o que fica gravado — ela vira o texto ao lado, para
+   * a conta nao ficar escondida.
+   */
   const termina = (() => {
     const [h, m] = form.dueTime.split(':').map(Number)
     if (Number.isNaN(h)) return null
@@ -236,6 +241,24 @@ export function TaskDialog(): React.JSX.Element {
     fim.setMinutes(fim.getMinutes() + Math.max(1, form.durationMinutes))
     return formatHm(fim)
   })()
+
+  /**
+   * Deriva a duracao a partir do horario de termino digitado.
+   *
+   * Termino menor que o inicio significa **dia seguinte**: e o caso de dormir das
+   * 23h as 7h, que sem isso daria duracao negativa e viraria um minuto.
+   */
+  function aplicarTermino(valor: string): void {
+    const [hi, mi] = form.dueTime.split(':').map(Number)
+    const [hf, mf] = valor.split(':').map(Number)
+    if (Number.isNaN(hi) || Number.isNaN(hf)) return
+
+    const inicio = (hi || 0) * 60 + (mi || 0)
+    let fim = (hf || 0) * 60 + (mf || 0)
+    if (fim <= inicio) fim += 24 * 60
+
+    update('durationMinutes', Math.min(24 * 60 - 1, fim - inicio))
+  }
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
@@ -549,15 +572,26 @@ export function TaskDialog(): React.JSX.Element {
 
                   <div className={cn('grid gap-2', form.kind === 'reminder' && 'hidden')}>
                     <div className="flex items-baseline justify-between">
-                      <Label htmlFor="duration">Duração</Label>
-                      {termina && (
-                        <span className="text-muted-foreground text-xs">
-                          termina às <span className="font-mono">{termina}</span>
+                      <Label htmlFor="due-end">Termina às</Label>
+                      <span className="text-muted-foreground text-xs">
+                        duração{' '}
+                        <span className="font-mono">
+                          {formatDuration(form.durationMinutes)}
                         </span>
-                      )}
+                      </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
+                      <Input
+                        id="due-end"
+                        type="time"
+                        className="w-32"
+                        value={termina ?? ''}
+                        onChange={(event) => aplicarTermino(event.target.value)}
+                      />
+
+                      {/* Atalhos de duracao: continuam uteis porque quase todo bloco
+                          e um numero redondo, e evitam a conta de cabeca. */}
                       {DURATION_PRESETS.map((minutos) => (
                         <button
                           key={minutos}
@@ -573,21 +607,6 @@ export function TaskDialog(): React.JSX.Element {
                           {formatDuration(minutos)}
                         </button>
                       ))}
-
-                      <div className="flex items-center gap-1.5">
-                        <Input
-                          id="duration"
-                          type="number"
-                          min={1}
-                          max={600}
-                          className="w-20"
-                          value={form.durationMinutes}
-                          onChange={(event) =>
-                            update('durationMinutes', Number(event.target.value))
-                          }
-                        />
-                        <span className="text-muted-foreground text-xs">min</span>
-                      </div>
                     </div>
                   </div>
 
