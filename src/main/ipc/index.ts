@@ -8,7 +8,13 @@ import * as categories from '../services/categories.service'
 import * as settings from '../services/settings.service'
 import { getSyncState, runSync, scheduleSync } from '../sync/engine'
 import { setAutoLaunch, isAutoLaunchEnabled } from '../auto-launch'
-import type { AppSettings, CreateCategoryInput, CreateTaskInput, TaskFilters, UpdateCategoryInput, UpdateTaskInput } from '@shared/types'
+import {
+  clearMedia,
+  getMediaDataUrl,
+  getPersonalization,
+  pickMedia
+} from '../personalization'
+import type { AppSettings, CreateCategoryInput, CreateTaskInput, MediaKind, TaskFilters, UpdateCategoryInput, UpdateTaskInput } from '@shared/types'
 
 /**
  * Ponte entre o renderer e o processo principal.
@@ -198,4 +204,18 @@ export function registerIpcHandlers(): void {
   /* -------------------------- sistema --------------------------- */
 
   handle(CHANNELS.system.getAutoLaunch, () => isAutoLaunchEnabled())
+
+  /* ----------------------- personalizacao ----------------------- */
+
+  /*
+    Nao passa por `requireUserId` nem por `afterMutation`: som e imagem sao
+    preferencia da maquina, nao do usuario logado, e nao ha nada para sincronizar.
+  */
+  handle(CHANNELS.personalization.get, () => getPersonalization())
+
+  handle(CHANNELS.personalization.getMedia, (kind: MediaKind) => getMediaDataUrl(kind))
+
+  handle(CHANNELS.personalization.pick, (kind: MediaKind) => pickMedia(kind))
+
+  handle(CHANNELS.personalization.clear, (kind: MediaKind) => clearMedia(kind))
 }

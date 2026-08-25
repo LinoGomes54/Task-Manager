@@ -237,3 +237,23 @@ export interface Session {
 
 /** Formato uniforme de retorno de todos os canais IPC. */
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string }
+
+/* ------------------------------------------------------------------ */
+/* Personalizacao (so local)                                           */
+/* ------------------------------------------------------------------ */
+
+/** Os tres itens que o usuario pode trocar por um arquivo proprio. */
+export type MediaKind = 'alarmSound' | 'avatar' | 'background'
+
+/**
+ * Nome do arquivo guardado para cada item, ou `null` quando esta no padrao.
+ *
+ * Nunca sai desta maquina: som e imagem sao preferencia de quem esta na frente
+ * do computador, nao dado de tarefa, e trafegar binario ate o Neon so encareceria
+ * a sincronizacao.
+ */
+export interface Personalization {
+  alarmSound: string | null
+  avatar: string | null
+  background: string | null
+}

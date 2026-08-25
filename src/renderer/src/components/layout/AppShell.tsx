@@ -8,6 +8,7 @@ import { SyncIndicator } from './SyncIndicator'
 import { CurrentTaskIndicator } from './CurrentTaskIndicator'
 import { HeaderClock } from './HeaderClock'
 import { useTaskDialog } from '@/stores/task-dialog.store'
+import { useMediaUrl } from '@/hooks/use-personalization'
 
 /**
  * Estrutura visual do app logado: sidebar + area de conteudo.
@@ -21,7 +22,7 @@ function Topbar(): React.JSX.Element {
   const openNewTask = useTaskDialog((store) => store.openNew)
 
   return (
-    <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
+    <header className="bg-background/80 relative z-[2] sticky top-0 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
       {/* So aparece com a barra recolhida: expandida, o botao de recolher fica
           dentro dela, como no design. */}
       {state === 'collapsed' && (
@@ -65,14 +66,28 @@ function Topbar(): React.JSX.Element {
 }
 
 export function AppShell(): React.JSX.Element {
+  const fundo = useMediaUrl('background')
+
   return (
     <SidebarProvider>
       <AppSidebar />
       {/* `min-w-0` e essencial num filho de flex: sem ele o conteudo largo
           (tabelas, listas) empurra o container em vez de rolar dentro dele. */}
-      <SidebarInset className="flex h-screen min-w-0 flex-col overflow-hidden">
+      <SidebarInset className="relative flex h-screen min-w-0 flex-col overflow-hidden">
+        {/*
+          A imagem de fundo fica numa camada propria atras do conteudo, com um
+          veu por cima: aplicada direto no `background` do painel, ela competiria
+          com o texto e deixaria as listas ilegiveis em qualquer foto clara.
+        */}
+        {fundo && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${fundo})`, opacity: 0.18 }}
+          />
+        )}
         <Topbar />
-        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="relative z-[1] flex-1 overflow-x-hidden overflow-y-auto">
           {/*
             `@container` faz as paginas reagirem a largura REAL do conteudo, e nao
             a da janela. Sem isso, recolher a sidebar (que devolve ~200px) nao

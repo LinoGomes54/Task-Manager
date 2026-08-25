@@ -1,20 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { CHANNELS, EVENTS } from '@shared/channels'
-import type {
-  AppSettings,
-  AuthResult,
-  Category,
-  CreateCategoryInput,
-  CreateTaskInput,
-  DashboardStats,
-  IpcResult,
-  Session,
-  SyncState,
-  Task,
-  TaskFilters,
-  UpdateCategoryInput,
-  UpdateTaskInput
-} from '@shared/types'
+import type { AppSettings, AuthResult, Category, CreateCategoryInput, CreateTaskInput, DashboardStats, IpcResult, MediaKind, Personalization, Session, SyncState, Task, TaskFilters, UpdateCategoryInput, UpdateTaskInput } from '@shared/types'
 
 /**
  * Superficie exposta ao renderer. E a unica coisa que a UI enxerga do Node —
@@ -81,6 +67,12 @@ const api = {
   },
   system: {
     getAutoLaunch: () => invoke<boolean>(CHANNELS.system.getAutoLaunch)
+  },
+  personalization: {
+    get: () => invoke<Personalization>(CHANNELS.personalization.get),
+    getMedia: (kind: MediaKind) => invoke<string | null>(CHANNELS.personalization.getMedia, kind),
+    pick: (kind: MediaKind) => invoke<Personalization>(CHANNELS.personalization.pick, kind),
+    clear: (kind: MediaKind) => invoke<Personalization>(CHANNELS.personalization.clear, kind)
   },
   events: {
     onSyncStateChanged: (handler: (state: SyncState) => void) =>

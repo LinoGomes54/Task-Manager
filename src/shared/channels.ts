@@ -39,6 +39,12 @@ export const CHANNELS = {
   },
   system: {
     getAutoLaunch: 'system:get-auto-launch'
+  },
+  personalization: {
+    get: 'personalization:get',
+    getMedia: 'personalization:get-media',
+    pick: 'personalization:pick',
+    clear: 'personalization:clear'
   }
 } as const
 

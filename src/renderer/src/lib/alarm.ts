@@ -1,10 +1,22 @@
 /**
- * Som do alarme, gerado pela Web Audio API.
+ * Som do alarme.
  *
- * Optamos por sintetizar em vez de embutir um .mp3: nao adiciona binario ao
- * pacote, respeita a CSP (que bloqueia `media-src` externo) e o volume fica
- * previsivel em qualquer maquina.
+ * O padrao e sintetizado pela Web Audio API: nao adiciona binario ao pacote,
+ * respeita a CSP (que bloqueia `media-src` externo) e o volume fica previsivel
+ * em qualquer maquina.
+ *
+ * Quem escolher um arquivo proprio em Configuracoes ouve o dele. O `data:` URI
+ * fica guardado aqui porque o alarme toca a partir de um evento do processo
+ * principal, fora de qualquer componente React — nao ha hook para consultar
+ * nesse instante.
  */
+
+let somEscolhido: string | null = null
+
+/** Define (ou limpa) o som proprio. Chamado quando a personalizacao carrega. */
+export function setCustomAlarmSound(dataUrl: string | null): void {
+  somEscolhido = dataUrl
+}
 
 let context: AudioContext | null = null
 
@@ -15,6 +27,18 @@ function getContext(): AudioContext {
 
 /** Dois bipes curtos, discretos o bastante para nao assustar. */
 export function playAlarmSound(): void {
+  if (somEscolhido) {
+    try {
+      const audio = new Audio(somEscolhido)
+      audio.volume = 0.8
+      void audio.play()
+      return
+    } catch {
+      // Arquivo invalido ou codec sem suporte: cai nos bipes sintetizados, que
+      // sempre funcionam — ficar em silencio seria pior do que soar diferente.
+    }
+  }
+
   try {
     const ctx = getContext()
     if (ctx.state === 'suspended') void ctx.resume()

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Power, Bell, Palette, Cloud, RefreshCw, Info, Repeat, Timer } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { PersonalizationCard } from '@/components/settings/PersonalizationCard'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -182,6 +183,8 @@ export function SettingsPage(): React.JSX.Element {
             />
           </CardContent>
         </Card>
+
+        <PersonalizationCard />
 
         <Card>
           <CardHeader>

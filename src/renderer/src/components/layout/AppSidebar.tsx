@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth.store'
 import { useStats } from '@/hooks/use-tasks'
+import { useMediaUrl } from '@/hooks/use-personalization'
 import { useCategories } from '@/hooks/use-categories'
 import { useSettings } from '@/hooks/use-settings'
 import { initials } from '@/lib/format'
@@ -55,6 +56,7 @@ export function AppSidebar(): React.JSX.Element {
   const { data: stats } = useStats()
   const { data: categories = [] } = useCategories()
   const { data: settings } = useSettings()
+  const avatar = useMediaUrl('avatar')
 
   const isActive = (to: string, end?: boolean): boolean =>
     end ? pathname === to : pathname.startsWith(to)
@@ -178,12 +180,21 @@ export function AppSidebar(): React.JSX.Element {
         />
 
         <div className="border-border bg-card mt-1.5 flex items-center gap-2.5 rounded-[10px] border p-[7px_8px] group-data-[collapsible=icon]:hidden">
-          <div
-            className="flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white"
-            style={{ backgroundColor: 'var(--accent-base)' }}
-          >
-            {initials(session?.user.name ?? '?')}
-          </div>
+          {/* A foto escolhida substitui as iniciais; sem foto, as iniciais ficam. */}
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              className="size-7 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className="flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white"
+              style={{ backgroundColor: 'var(--accent-base)' }}
+            >
+              {initials(session?.user.name ?? '?')}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13.5px] font-semibold">{session?.user.name}</p>
             <p className="text-muted-foreground truncate text-[11.5px]">{session?.user.email}</p>

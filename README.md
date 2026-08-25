@@ -248,6 +248,34 @@ processo principal empurra sozinha as anuais que já passaram para o próximo an
 quantos anos forem necessários se ela ficou parada muito tempo. Sem isso a lista mostraria
 para sempre o aniversário do ano passado, e o aviso de "faltam 7 dias" nunca mais dispararia.
 
+### Personalização (som e imagens)
+
+Em **Configurações → Personalização** dá para trocar três coisas por arquivos seus:
+
+| Item | Formatos | Onde aparece |
+|---|---|---|
+| Som do alarme | mp3, wav, ogg, m4a, aac, flac | No lugar dos dois bipes sintetizados |
+| Foto de perfil | png, jpg, webp, gif | No cartão do seu nome, no rodapé da barra lateral |
+| Imagem de fundo | png, jpg, webp | Atrás do conteúdo, esmaecida a 18% |
+
+**Fica apenas neste computador.** Nada disso vai para o Neon: som e imagem são preferência
+de quem está na frente da máquina, não dado de tarefa, e trafegar binário até o banco
+encareceria a sincronização sem ganho nenhum. Por isso mora num `personalization.json`
+próprio, e não na tabela `user_settings`, que é sincronizada.
+
+O arquivo escolhido é **copiado** para `%APPDATA%/task-manager/media/`, e não referenciado
+pelo caminho original — um caminho aponta para algo que você pode mover, renomear ou apagar
+depois, e o app ficaria com um som que não toca mais sem dizer por quê. Se o arquivo copiado
+sumir mesmo assim, o item volta sozinho ao padrão em vez de quebrar. Limite de 8 MB por arquivo.
+
+O conteúdo chega ao renderer como `data:` URI, não como caminho: a CSP bloqueia `file://`,
+e assim o renderer continua sem qualquer acesso ao disco. A imagem de fundo entra numa camada
+própria atrás do conteúdo — aplicada direto no fundo do painel, competiria com o texto e
+deixaria as listas ilegíveis em qualquer foto clara.
+
+Se o áudio escolhido não tocar (codec sem suporte, arquivo corrompido), o alarme cai nos bipes
+sintetizados: ficar em silêncio seria pior do que soar diferente.
+
 ### Calendário e tarefas do mês
 
 O calendário mostra o mês inteiro. Cada dia exibe pontinhos coloridos — um por tarefa,

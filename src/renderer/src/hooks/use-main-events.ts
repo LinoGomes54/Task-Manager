@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { queryKeys } from '@/lib/query'
-import { playAlarmSound } from '@/lib/alarm'
+import { playAlarmSound, setCustomAlarmSound } from '@/lib/alarm'
+import { useMediaUrl } from '@/hooks/use-personalization'
 
 /**
  * Assina os eventos que o processo principal empurra para a UI.
@@ -15,6 +16,14 @@ import { playAlarmSound } from '@/lib/alarm'
 export function useMainEvents(): void {
   const client = useQueryClient()
   const navigate = useNavigate()
+  const somProprio = useMediaUrl('alarmSound')
+
+  // O alarme toca a partir de um evento do processo principal, fora do React.
+  // Guardamos o som no modulo assim que ele carrega, para o disparo nao precisar
+  // consultar hook nenhum no instante em que soa.
+  useEffect(() => {
+    setCustomAlarmSound(somProprio)
+  }, [somProprio])
 
   useEffect(() => {
     const unsubscribers = [
