@@ -22,7 +22,6 @@ import {
   dayRange,
   type TaskBlock
 } from '@shared/agenda'
-import { isAutoCompleteRunning, AUTO_COMPLETE_MESSAGE } from '@shared/task-rules'
 import { combineDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { PlanDayDialog } from '@/components/tasks/PlanDayDialog'
@@ -30,10 +29,14 @@ import { PlanDayDialog } from '@/components/tasks/PlanDayDialog'
 /**
  * Playground: a agenda do dia.
  *
- * **Nao cronometra nada.** O que manda e o relogio: a tarefa em andamento e
- * aquela cujo horario ja comecou e ainda nao terminou. Um cronometro manual
- * exigiria lembrar de apertar play, e a agenda deixaria de refletir o dia real
- * no instante em que alguem esquecesse.
+ * **Nao cronometra nada e nao age sobre nada.** O que manda e o relogio: a tarefa
+ * em andamento e aquela cujo horario ja comecou e ainda nao terminou. Um
+ * cronometro manual exigiria lembrar de apertar play, e a agenda deixaria de
+ * refletir o dia real no instante em que alguem esquecesse.
+ *
+ * Concluir se faz na lista de tarefas ou no card do cabecalho. Aqui a tela e so
+ * de leitura: e para onde se olha para saber onde se esta no dia, e um botao de
+ * acao no meio disso convida a mexer quando a intencao era so conferir.
  */
 export function PlaygroundPage(): React.JSX.Element {
   const [montandoDia, setMontandoDia] = useState(false)
@@ -165,22 +168,6 @@ export function PlaygroundPage(): React.JSX.Element {
                 </span>
               </div>
 
-              {isAutoCompleteRunning(current.task) ? (
-                <p
-                  className="rounded-lg border px-3 py-2.5 text-center text-[12px]"
-                  style={{ color: 'var(--faint)' }}
-                >
-                  {AUTO_COMPLETE_MESSAGE}
-                </p>
-              ) : (
-                <Button
-                  className="w-full gap-1.5"
-                  onClick={() => toggleComplete.mutate(current.task.id)}
-                >
-                  <Check className="size-4" />
-                  Concluir
-                </Button>
-              )}
             </div>
           )}
         </Panel>
