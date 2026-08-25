@@ -16,9 +16,27 @@ import { useTasks } from '@/hooks/use-tasks'
 import { useCategories } from '@/hooks/use-categories'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 import { PRIORITY_LABELS, STATUS_LABELS } from '@/lib/format'
+import { dayRange } from '@shared/agenda'
 import type { TaskFilters, TaskPriority, TaskStatus } from '@shared/types'
 
 const ALL = 'all'
+
+/**
+ * Recorte de prazo da lista.
+ *
+ * O padrao e **hoje**: a lista completa cresce sem parar, e abrir a aba para
+ * encarar tudo o que ja foi anotado esconde justamente o que precisa ser feito
+ * agora. Os outros recortes ficam a um clique — e, ao contrario de um filtro
+ * implicito, este aparece na tela, entao nada some sem explicacao.
+ */
+const PERIODOS = {
+  hoje: 'Hoje',
+  tudo: 'Todos os prazos',
+  atrasadas: 'Atrasadas',
+  sem_prazo: 'Sem prazo'
+} as const
+
+type Periodo = keyof typeof PERIODOS
 
 /** Lista completa com busca e filtros. E tambem o alvo dos atalhos da bandeja. */
 export function TasksPage(): React.JSX.Element {
@@ -30,6 +48,7 @@ export function TasksPage(): React.JSX.Element {
   const [categoryId, setCategoryId] = useState<string>(ALL)
   const [status, setStatus] = useState<TaskStatus | typeof ALL>(ALL)
   const [priority, setPriority] = useState<TaskPriority | typeof ALL>(ALL)
+  const [periodo, setPeriodo] = useState<Periodo>('hoje')
 
   // Parametros de URL: `nova=1` vem do menu da bandeja, `q` da busca da barra
   // lateral e `categoria` do clique numa categoria no painel ou na navegacao.
@@ -42,9 +61,13 @@ export function TasksPage(): React.JSX.Element {
       mudou = true
     }
 
+    // Buscar ou filtrar por categoria vindo de fora e um pedido para procurar em
+    // tudo. Manter o recorte de hoje devolveria "nada encontrado" para uma tarefa
+    // que existe, e a busca pareceria quebrada.
     const q = searchParams.get('q')
     if (q !== null) {
       setSearch(q)
+      setPeriodo('tudo')
       searchParams.delete('q')
       mudou = true
     }
@@ -52,6 +75,7 @@ export function TasksPage(): React.JSX.Element {
     const categoria = searchParams.get('categoria')
     if (categoria !== null) {
       setCategoryId(categoria || ALL)
+      setPeriodo('tudo')
       searchParams.delete('categoria')
       mudou = true
     }
@@ -59,11 +83,16 @@ export function TasksPage(): React.JSX.Element {
     if (mudou) setSearchParams(searchParams, { replace: true })
   }, [searchParams, setSearchParams, openNew])
 
+  const hoje = dayRange()
   const filters: TaskFilters = {
     search: search || undefined,
     categoryId: categoryId === ALL ? undefined : categoryId,
     status: status === ALL ? undefined : status,
-    priority: priority === ALL ? undefined : priority
+    priority: priority === ALL ? undefined : priority,
+    from: periodo === 'hoje' ? hoje.from : undefined,
+    to: periodo === 'hoje' ? hoje.to : undefined,
+    dueScope:
+      periodo === 'atrasadas' ? 'overdue' : periodo === 'sem_prazo' ? 'no_due' : undefined
   }
 
   const { data: tasks, isLoading } = useTasks(filters)
@@ -72,7 +101,11 @@ export function TasksPage(): React.JSX.Element {
     <>
       <PageHeader
         title="Tarefas"
-        description="Busque, filtre e organize tudo que você anotou."
+        description={
+          periodo === 'hoje'
+            ? 'O que tem prazo para hoje. Troque o período para ver o resto.'
+            : 'Busque, filtre e organize tudo que você anotou.'
+        }
         stats={tasks ? `${tasks.length} ${tasks.length === 1 ? 'tarefa' : 'tarefas'}` : undefined}
         action={
           <Button onClick={() => openNew()} className="gap-1.5">
@@ -94,6 +127,19 @@ export function TasksPage(): React.JSX.Element {
             className="pl-9"
           />
         </div>
+
+        <Select value={periodo} onValueChange={(value) => setPeriodo(value as Periodo)}>
+          <SelectTrigger className="w-44 shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(PERIODOS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Select value={categoryId} onValueChange={setCategoryId}>
           <SelectTrigger className="w-48 shrink-0">
@@ -143,9 +189,11 @@ export function TasksPage(): React.JSX.Element {
         loading={isLoading}
         empty={{
           icon: <Inbox className="size-8" />,
-          title: 'Nenhuma tarefa encontrada',
+          title: periodo === 'hoje' ? 'Nada com prazo para hoje' : 'Nenhuma tarefa encontrada',
           description:
-            'Ajuste os filtros ou crie uma tarefa nova — ela é salva na hora, mesmo sem internet.'
+            periodo === 'hoje'
+              ? 'Troque o período para “Todos os prazos” para ver o que ficou para depois — ou crie uma tarefa nova.'
+              : 'Ajuste os filtros ou crie uma tarefa nova — ela é salva na hora, mesmo sem internet.'
         }}
       />
     </>

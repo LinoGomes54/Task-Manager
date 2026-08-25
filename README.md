@@ -304,6 +304,19 @@ do bloco não é fechada de novo, senão ela voltaria sozinha para "feita" segun
 O interruptor não aparece em **lembretes**, que não ocupam tempo e por isso não têm um
 fim para disparar a conclusão.
 
+### A aba Tarefas abre no dia
+
+**Tarefas** abre com o período em **Hoje**. A lista completa cresce sem parar, e encarar tudo
+o que já foi anotado esconde justamente o que precisa ser feito agora.
+
+O seletor de período fica na primeira posição dos filtros, com quatro recortes: *Hoje*,
+*Todos os prazos*, *Atrasadas* e *Sem prazo*. Ao contrário de um filtro implícito, ele aparece
+na tela — nada some sem explicação, e a tela vazia diz para onde ir.
+
+Buscar pela barra lateral ou clicar numa categoria abre em **Todos os prazos**: procurar é um
+pedido para olhar em tudo, e manter o recorte do dia devolveria "nada encontrado" para uma
+tarefa que existe.
+
 ### Datas importantes
 
 O formulário tem três tipos, no topo: **Tarefa** (ocupa tempo), **Lembrete** (só avisa) e

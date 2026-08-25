@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils'
 
 const WORKSPACE = [
   { to: '/', label: 'Painel', meta: 'visão do dia', icon: LayoutDashboard, end: true },
-  { to: '/tarefas', label: 'Tarefas', meta: 'lista completa', icon: ListChecks },
+  { to: '/tarefas', label: 'Tarefas', meta: 'do dia', icon: ListChecks },
   { to: '/calendario', label: 'Calendário', meta: 'mês', icon: CalendarDays },
   { to: '/playground', label: 'Playground', meta: 'agenda do dia', icon: Timer }
 ]
