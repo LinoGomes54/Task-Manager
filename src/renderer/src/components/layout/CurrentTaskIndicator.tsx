@@ -49,7 +49,10 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
       }}
       title={emAndamento ? 'Em andamento agora — abrir o Playground' : 'Próxima tarefa'}
       className={cn(
-        'relative flex min-w-0 max-w-[380px] cursor-pointer items-center gap-2.5 overflow-hidden rounded-full border py-1 pr-1 pl-3 transition-colors',
+        'relative flex min-w-0 max-w-[380px] cursor-pointer items-center gap-2.5 overflow-hidden rounded-full border py-1.5 pl-3.5 transition-colors',
+        // Sem o botao de concluir, o `pr` curto existia so para acomoda-lo: o
+        // horario encostava na borda. Com botao, ele mesmo faz o espaco.
+        podeConcluir ? 'pr-1.5' : 'pr-3.5',
         emAndamento ? 'border-[color:var(--accent-base)]' : 'border-border hover:border-ring/40'
       )}
     >
