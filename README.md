@@ -145,6 +145,16 @@ na etiqueta de cada tarefa e no resumo por categoria do dashboard.
 
 Excluir uma categoria **não apaga as tarefas dela** — elas apenas ficam sem categoria.
 
+### Editar o horário de uma repetição
+
+Trocar o horário de uma tarefa que se repete **mantém o dia** da ocorrência atual e aplica só
+o horário novo. Recalcular a primeira ocorrência empurraria a tarefa de hoje para a próxima
+repetição sem ninguém ter pedido.
+
+Se a **regra** mudar — outro tipo de repetição, outros dias da semana, outro dia do mês — aí
+o dia atual deixou de fazer sentido e a ocorrência é recalculada do zero. Uma semanal de terça
+trocada para quinta pula para a próxima quinta.
+
 ### Tarefas recorrentes
 
 Ao **concluir** uma tarefa recorrente, a próxima ocorrência é criada automaticamente

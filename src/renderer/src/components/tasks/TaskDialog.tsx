@@ -220,23 +220,61 @@ export function TaskDialog(): React.JSX.Element {
     })
   }
 
+  /**
+   * `true` quando a regra de repeticao da tarefa em edicao nao mudou.
+   *
+   * Se a regra continua a mesma, o DIA da ocorrencia atual continua valendo e so
+   * o horario precisa ser aplicado. Se mudou — outro tipo, outros dias da semana,
+   * outro dia do mes — o dia atual deixou de fazer sentido e a ocorrencia e
+   * recalculada do zero.
+   */
+  function mesmaRegraDeRepeticao(): boolean {
+    if (!editing) return false
+    if (editing.recurrence !== form.recurrence) return false
+
+    if (form.recurrence === 'weekly') {
+      const antes = [...editing.recurrenceWeekdays].sort((a, b) => a - b).join(',')
+      const agora = [...new Set(form.recurrenceWeekdays)].sort((a, b) => a - b).join(',')
+      if (antes !== agora) return false
+    }
+
+    if (form.recurrence === 'monthly' && editing.dueAt) {
+      if (parseISO(editing.dueAt).getDate() !== form.monthDay) return false
+    }
+
+    return true
+  }
+
   function buildPayload(): CreateTaskInput {
     // Numa tarefa repetida o app calcula a primeira ocorrencia a partir da regra;
     // so a tarefa avulsa (e a anual) usa a data escolhida na mao.
-    const dueAt =
-      form.recurrence === 'none'
-        ? form.hasDueDate
+    const dueAt = (() => {
+      if (form.recurrence === 'none') {
+        return form.hasDueDate
           ? combineDateTime(form.dueDate ?? new Date(), form.dueTime)
           : null
-        : (editing?.dueAt ??
-          firstOccurrence({
-            rule: form.recurrence,
-            time: form.dueTime,
-            weekdays: form.recurrenceWeekdays,
-            monthDay: form.monthDay,
-            date: form.dueDate,
-            durationMinutes: form.durationMinutes
-          }))
+      }
+
+      // Editando sem mexer na regra: manter o dia da ocorrencia e aplicar o
+      // horario novo. Antes o `dueAt` existente era preservado inteiro, entao
+      // trocar o horario de uma tarefa diaria nao mudava nada — ela continuava
+      // aparecendo em andamento no horario antigo.
+      //
+      // Recalcular a primeira ocorrencia tambem nao serve: empurraria a tarefa de
+      // hoje para a proxima repeticao sem ninguem ter pedido.
+      if (editing?.dueAt && mesmaRegraDeRepeticao()) {
+        return combineDateTime(parseISO(editing.dueAt), form.dueTime)
+      }
+
+      return firstOccurrence({
+        rule: form.recurrence,
+        time: form.dueTime,
+        weekdays: form.recurrenceWeekdays,
+        monthDay: form.monthDay,
+        date: form.dueDate,
+        durationMinutes: form.durationMinutes
+      })
+    })()
 
     return {
       title: form.title,
