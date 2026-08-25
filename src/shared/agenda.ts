@@ -31,8 +31,10 @@ export interface GapBlock {
 
 export function blockOf(task: Task): TaskBlock | null {
   if (!task.dueAt) return null
-  // Lembrete avisa e some: nao ocupa faixa na linha do dia nem conta como tempo.
-  if (task.kind === 'reminder') return null
+  // So `task` ocupa faixa na linha do dia. Lembrete avisa e some; data marcada
+  // vale o dia inteiro. Nenhum dos dois reserva tempo — sem essa distincao,
+  // "tomar remedio" e "aniversario da Ana" comeriam blocos da agenda.
+  if (task.kind !== 'task') return null
   const start = new Date(task.dueAt)
   const end = new Date(start.getTime() + Math.max(1, task.durationMinutes) * 60_000)
   return { task, start, end }

@@ -14,7 +14,16 @@ export type DensityPreference = 'compacto' | 'espacoso'
  * `reminder` — um aviso pontual (tomar remedio, beber agua): so notifica, nao
  *              ocupa bloco na linha do dia nem conta como tempo planejado.
  */
-export type TaskKind = 'task' | 'reminder'
+/**
+ * O que a linha e, para a agenda.
+ *
+ * - `task`     ocupa um bloco de tempo no dia.
+ * - `reminder` so avisa (tomar remedio); nao reserva tempo.
+ * - `date`     um dia marcado — aniversario, consulta, prova. Tambem nao reserva
+ *              tempo, mas vale o dia inteiro e costuma avisar com dias de
+ *              antecedencia, nao com minutos.
+ */
+export type TaskKind = 'task' | 'reminder' | 'date'
 
 export interface User {
   id: string
@@ -160,6 +169,14 @@ export interface TaskFilters {
   recurrence?: RecurrenceRule
   /** Separa tarefas de lembretes. Sem isso, vem os dois. */
   kind?: TaskKind
+  /**
+   * Traz tambem as datas marcadas (`kind: 'date'`), que ficam de fora por padrao.
+   *
+   * Aniversario nao e pendencia: numa lista de tarefas ele nao pode ser feito nem
+   * adiado, e so aumentaria o contador de coisas em aberto. Quem quer ver datas
+   * pede — o calendario e a pagina de Datas.
+   */
+  includeDates?: boolean
   /** ISO date (inclusive) — filtra por `dueAt`. */
   from?: string
   /** ISO date (inclusive) — filtra por `dueAt`. */

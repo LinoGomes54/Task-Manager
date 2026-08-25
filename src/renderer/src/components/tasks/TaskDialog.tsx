@@ -48,6 +48,22 @@ import { useSettings } from '@/hooks/use-settings'
 
 /** Duracoes sugeridas: um pomodoro, meio, dois e uma hora. */
 const DURATION_PRESETS = [15, 25, 50, 60]
+
+/**
+ * Antecedencia do aviso de uma data marcada, em minutos.
+ *
+ * Uma data se avisa em dias, nao em minutos: ninguem quer saber do aniversario
+ * quinze minutos antes da meia-noite. Sao os mesmos `remindMinutesBefore` do
+ * resto do app, so que expressos na unidade que faz sentido aqui.
+ */
+const DATE_REMINDER_OPTIONS = [
+  { value: 0, label: 'No dia' },
+  { value: 1440, label: '1 dia antes' },
+  { value: 4320, label: '3 dias antes' },
+  { value: 10080, label: '1 semana antes' },
+  { value: 20160, label: '2 semanas antes' },
+  { value: 43200, label: '1 mês antes' }
+]
 import type {
   CreateTaskInput,
   RecurrenceRule,
@@ -181,7 +197,27 @@ export function TaskDialog(): React.JSX.Element {
   }, [open, editing, defaults])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]): void {
-    setForm((current) => ({ ...current, [key]: value }))
+    setForm((current) => {
+      const proximo = { ...current, [key]: value }
+
+      // Trocar de tipo troca a unidade do aviso. Uma data avisada "15 minutos
+      // antes" nao serve para nada, e uma tarefa avisada "1 mes antes" tambem
+      // nao — cada tipo precisa cair num valor razoavel do proprio conjunto.
+      if (key === 'kind' && value !== current.kind) {
+        if (value === 'date') {
+          proximo.hasDueDate = true
+          proximo.dueDate = current.dueDate ?? new Date()
+          proximo.remindMinutesBefore = 1440
+          if (current.recurrence !== 'yearly' && current.recurrence !== 'none') {
+            proximo.recurrence = 'none'
+          }
+        } else if (current.kind === 'date') {
+          proximo.remindMinutesBefore = 15
+        }
+      }
+
+      return proximo
+    })
   }
 
   function buildPayload(): CreateTaskInput {
@@ -268,6 +304,11 @@ export function TaskDialog(): React.JSX.Element {
    * Previa dos ciclos, para o formulario responder "quantas rodadas isso da?"
    * antes de salvar.
    */
+  // So a tarefa reserva tempo. Lembrete e data marcada nao tem duracao, ciclos,
+  // descanso nem conclusao automatica — todos esses campos dependem de um bloco.
+  const ocupaTempo = form.kind === 'task'
+  const ehData = form.kind === 'date'
+
   const ciclos = (() => {
     if (!form.usaCiclos || form.kind === 'reminder') return null
     const foco = Math.max(1, form.focusMinutes)
@@ -313,11 +354,12 @@ export function TaskDialog(): React.JSX.Element {
               beber agua). Ele notifica mas nao ocupa bloco na agenda — sem essa
               distincao, "tomar remedio" reservaria 25 minutos do dia.
             */}
-            <div className="bg-muted/60 grid grid-cols-2 gap-1 rounded-lg p-1">
+            <div className="bg-muted/60 grid grid-cols-3 gap-1 rounded-lg p-1">
               {(
                 [
                   { value: 'task', label: 'Tarefa', hint: 'ocupa tempo' },
-                  { value: 'reminder', label: 'Lembrete', hint: 'só avisa' }
+                  { value: 'reminder', label: 'Lembrete', hint: 'só avisa' },
+                  { value: 'date', label: 'Data', hint: 'dia marcado' }
                 ] as const
               ).map((opcao) => (
                 <button
@@ -338,6 +380,23 @@ export function TaskDialog(): React.JSX.Element {
                 </button>
               ))}
             </div>
+
+            {ehData && (
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="yearly">Repete todo ano</Label>
+                  <p className="text-muted-foreground text-xs">
+                    Ligado para aniversários; desligado para algo de uma vez só, como uma
+                    consulta
+                  </p>
+                </div>
+                <Switch
+                  id="yearly"
+                  checked={form.recurrence === 'yearly'}
+                  onCheckedChange={(value) => update('recurrence', value ? 'yearly' : 'none')}
+                />
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="title">Título</Label>
@@ -452,7 +511,7 @@ export function TaskDialog(): React.JSX.Element {
               dia do mes. Perguntar "data + hora" para todas obrigava a escolher
               um dia que o app ja sabe calcular.
             */}
-            <div className="grid gap-2">
+            <div className={cn('grid gap-2', ehData && 'hidden')}>
               <Label>Repetição</Label>
               <div className="flex gap-3">
                 <Select
@@ -490,7 +549,7 @@ export function TaskDialog(): React.JSX.Element {
             </div>
 
             <div className="space-y-3 rounded-lg border p-3">
-              {form.recurrence === 'none' ? (
+              {form.recurrence === 'none' && !ehData ? (
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="has-due">Definir prazo</Label>
@@ -604,7 +663,7 @@ export function TaskDialog(): React.JSX.Element {
                     </div>
                   </div>
 
-                  <div className={cn('grid gap-2', form.kind === 'reminder' && 'hidden')}>
+                  <div className={cn('grid gap-2', !ocupaTempo && 'hidden')}>
                     <div className="flex items-baseline justify-between">
                       <Label htmlFor="due-end">Termina às</Label>
                       <span className="text-muted-foreground text-xs">
@@ -651,7 +710,7 @@ export function TaskDialog(): React.JSX.Element {
                   <div
                     className={cn(
                       'flex items-center justify-between rounded-lg border p-3',
-                      form.kind === 'reminder' && 'hidden'
+                      !ocupaTempo && 'hidden'
                     )}
                   >
                     <div className="space-y-0.5">
@@ -672,7 +731,7 @@ export function TaskDialog(): React.JSX.Element {
                   <div
                     className={cn(
                       'grid gap-3 rounded-lg border p-3',
-                      form.kind === 'reminder' && 'hidden'
+                      !ocupaTempo && 'hidden'
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -762,7 +821,7 @@ export function TaskDialog(): React.JSX.Element {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label>Lembrete</Label>
+                    <Label>{ehData ? 'Avisar' : 'Lembrete'}</Label>
                     <Select
                       value={String(form.remindMinutesBefore)}
                       onValueChange={(value) => update('remindMinutesBefore', Number(value))}
@@ -771,7 +830,7 @@ export function TaskDialog(): React.JSX.Element {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {REMINDER_OPTIONS.map((option) => (
+                        {(ehData ? DATE_REMINDER_OPTIONS : REMINDER_OPTIONS).map((option) => (
                           <SelectItem key={option.value} value={String(option.value)}>
                             {option.label}
                           </SelectItem>

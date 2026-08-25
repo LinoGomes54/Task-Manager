@@ -50,7 +50,9 @@ export function CalendarPage(): React.JSX.Element {
 
   const { data: tasks, isLoading } = useTasks({
     from: gridStart.toISOString(),
-    to: gridEnd.toISOString()
+    to: gridEnd.toISOString(),
+    // O calendario e justamente onde um aniversario precisa aparecer.
+    includeDates: true
   })
 
   const byDay = useMemo(() => {

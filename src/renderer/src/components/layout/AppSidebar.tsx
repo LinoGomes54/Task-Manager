@@ -1,22 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import {
-  Search,
-  LogOut,
-  Palette,
-  PanelLeft,
-  Tags,
-  Settings,
-  LayoutDashboard,
-  ListChecks,
-  CalendarDays,
-  Timer,
-  Sun,
-  Star,
-  Repeat,
-  CalendarRange,
-  CalendarClock
-} from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarHeart, CalendarRange, LayoutDashboard, ListChecks, LogOut, Palette, PanelLeft, Repeat, Search, Settings, Star, Sun, Tags, Timer } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -138,6 +122,12 @@ export function AppSidebar(): React.JSX.Element {
             meta={stats?.importantPending}
             icon={<Star className="size-4" />}
             active={isActive('/importantes')}
+          />
+          <NavRow
+            to="/datas"
+            label="Datas"
+            icon={<CalendarHeart className="size-4" />}
+            active={isActive('/datas')}
           />
         </NavSection>
 

@@ -95,6 +95,11 @@ export function listTasks(userId: string, filters: TaskFilters = {}): Task[] {
   if (filters.kind) {
     where.push('kind = ?')
     params.push(filters.kind)
+  } else if (!filters.includeDates) {
+    // Data marcada so aparece para quem pede: ela nao e uma pendencia, e nas
+    // listas de tarefas inflaria o contador de coisas em aberto sem que houvesse
+    // nada a fazer.
+    where.push("kind <> 'date'")
   }
   if (filters.from) {
     where.push('due_at >= ?')
@@ -327,6 +332,53 @@ export function completeExpired(userId: string): Task[] {
   })
 
   return vencidas.map((task) => getTask(userId, task.id)!).filter(Boolean)
+}
+
+/**
+ * Empurra para o proximo ano as datas anuais que ja passaram.
+ *
+ * Um aniversario nao e "concluido" — ele acontece e volta no ano seguinte. Sem
+ * isso a lista de datas mostraria para sempre o aniversario do ano passado, e o
+ * aviso de "faltam 7 dias" nunca mais dispararia.
+ *
+ * `notified_at` volta a NULL porque a data e outra: o aviso precisa poder tocar
+ * de novo na proxima vez.
+ */
+export function rollForwardDates(userId: string): number {
+  const candidatas = queryAll<Row>(
+    `SELECT * FROM tasks
+      WHERE user_id = ? AND deleted_at IS NULL AND kind = 'date'
+        AND recurrence = 'yearly' AND status != 'done' AND due_at IS NOT NULL`,
+    [userId]
+  ).map(mapTask)
+
+  const inicioDeHoje = new Date()
+  inicioDeHoje.setHours(0, 0, 0, 0)
+
+  const vencidas = candidatas.filter(
+    (task) => new Date(task.dueAt!).getTime() < inicioDeHoje.getTime()
+  )
+  if (vencidas.length === 0) return 0
+
+  const timestamp = now()
+  transaction(() => {
+    for (const task of vencidas) {
+      const proxima = new Date(task.dueAt!)
+      // Avanca ano a ano ate alcancar hoje: uma data parada ha tres anos precisa
+      // de tres saltos, e um salto so a deixaria ainda no passado.
+      while (proxima.getTime() < inicioDeHoje.getTime()) {
+        proxima.setFullYear(proxima.getFullYear() + 1)
+      }
+
+      execute(
+        `UPDATE tasks SET due_at = ?, notified_at = NULL, updated_at = ?, dirty = 1
+          WHERE id = ? AND user_id = ?`,
+        [proxima.toISOString(), timestamp, task.id, userId]
+      )
+    }
+  })
+
+  return vencidas.length
 }
 
 export function toggleImportant(userId: string, id: string): Task {

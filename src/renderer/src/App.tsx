@@ -11,6 +11,7 @@ import { DashboardPage } from '@/pages/Dashboard'
 import { TasksPage } from '@/pages/Tasks'
 import { TodayPage } from '@/pages/Today'
 import { ImportantPage } from '@/pages/Important'
+import { DatesPage } from './pages/Dates'
 import { DailyPage, WeeklyPage, MonthlyPage } from '@/pages/Recurrence'
 import { CalendarPage } from '@/pages/CalendarPage'
 import { PlaygroundPage } from '@/pages/Playground'
@@ -79,6 +80,7 @@ function Root(): React.JSX.Element {
           <Route path="hoje" element={<TodayPage />} />
           <Route path="playground" element={<PlaygroundPage />} />
           <Route path="importantes" element={<ImportantPage />} />
+          <Route path="datas" element={<DatesPage />} />
           <Route path="diariamente" element={<DailyPage />} />
           <Route path="semanalmente" element={<WeeklyPage />} />
           <Route path="mensalmente" element={<MonthlyPage />} />

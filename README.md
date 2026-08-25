@@ -214,8 +214,7 @@ recorrente a marcação é herdada pela próxima ocorrência — uma diária de 
 a exigir o clique já na segunda noite.
 
 **Enquanto o tempo não acaba, a tarefa não pode ser marcada na mão.** A caixa fica
-desabilitada com a explicação no tooltip, o Playground troca o botão *Concluir* pelo motivo
-e o card do header esconde o visto. Marcar antes contradiz o motivo de existir da opção:
+desabilitada com a explicação no tooltip e o card do header esconde o visto. Marcar antes contradiz o motivo de existir da opção:
 dizer às 2h da manhã que já dormiu as oito horas é uma afirmação falsa que o app aceitaria
 sem questionar. O backend também recusa — a regra vive em `shared/` e vale nos dois lados.
 
@@ -224,6 +223,30 @@ do bloco não é fechada de novo, senão ela voltaria sozinha para "feita" segun
 
 O interruptor não aparece em **lembretes**, que não ocupam tempo e por isso não têm um
 fim para disparar a conclusão.
+
+### Datas importantes
+
+O formulário tem três tipos, no topo: **Tarefa** (ocupa tempo), **Lembrete** (só avisa) e
+**Data** (dia marcado). A Data serve para o que acontece num dia específico e não toma tempo
+do dia: aniversário, consulta, prova, vencimento.
+
+- **Repete todo ano** — ligado para aniversários, desligado para algo de uma vez só
+- **Avisar** — em dias, não em minutos: no dia, 1 dia, 3 dias, 1 semana, 2 semanas, 1 mês antes.
+  Ninguém quer saber do aniversário quinze minutos antes da meia-noite.
+
+A aba **Datas** lista tudo ordenado por **quanto falta**, e não por data absoluta, porque a
+pergunta que se faz a essa lista é sempre "o que vem primeiro?" — ordenar por dia do mês
+colocaria o aniversário de janeiro no topo em dezembro. O que já passou fica separado embaixo.
+
+**Datas não aparecem nas listas de tarefas.** Aniversário não é pendência: numa lista de
+afazeres ele não pode ser feito nem adiado, e só aumentaria o contador de coisas em aberto.
+Elas aparecem na aba Datas e no **calendário**, que é justamente onde um aniversário precisa
+estar.
+
+Uma data anual não é "concluída" — ela acontece e volta no ano seguinte. A varredura do
+processo principal empurra sozinha as anuais que já passaram para o próximo ano, saltando
+quantos anos forem necessários se ela ficou parada muito tempo. Sem isso a lista mostraria
+para sempre o aniversário do ano passado, e o aviso de "faltam 7 dias" nunca mais dispararia.
 
 ### Calendário e tarefas do mês
 

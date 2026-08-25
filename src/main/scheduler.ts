@@ -1,5 +1,10 @@
 import { Notification, BrowserWindow } from 'electron'
-import { completeExpired, findTasksToNotify, markNotified } from './services/tasks.service'
+import {
+  completeExpired,
+  findTasksToNotify,
+  markNotified,
+  rollForwardDates
+} from './services/tasks.service'
 import { getSettings } from './services/settings.service'
 import { getSessionUserId } from './session'
 import { EVENTS } from '@shared/channels'
@@ -43,7 +48,7 @@ function tick(): void {
   // notificacoes e fora do `notificationsEnabled`: desligar os avisos nao deveria
   // deixar "dormir" pendente para sempre.
   try {
-    if (completeExpired(userId).length > 0) {
+    if (completeExpired(userId).length + rollForwardDates(userId) > 0) {
       for (const window of BrowserWindow.getAllWindows()) {
         window.webContents.send(EVENTS.dataChanged)
       }
