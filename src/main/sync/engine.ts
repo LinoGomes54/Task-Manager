@@ -229,8 +229,26 @@ async function pullTable(table: SyncTable, userId: string): Promise<number> {
  * migrations do Prisma nunca foram aplicadas nesse banco. Sem esta traducao, o
  * usuario veria apenas `relation "tasks" does not exist` e nao saberia o que fazer.
  */
+/**
+ * Apaga credenciais de um texto antes de ele sair do processo principal.
+ *
+ * `lastError` atravessa o IPC e aparece na tela de Configuracoes. A mensagem vem
+ * do driver do Postgres, que em algumas falhas ecoa a URL de conexao — e a URL
+ * carrega a senha do banco. Nao da para saber de antemao qual erro faz isso,
+ * entao a limpeza e cega: qualquer `usuario:senha@` vira `***@`, e a propria
+ * `DATABASE_URL` e removida se aparecer inteira.
+ */
+export function redactSecrets(text: string): string {
+  let limpo = text.replace(/([a-z+]+:\/\/)[^\s/@:]+:[^\s/@]*@/gi, '$1***@')
+
+  const url = process.env.DATABASE_URL?.trim()
+  if (url) limpo = limpo.split(url).join('[DATABASE_URL]')
+
+  return limpo
+}
+
 export function describeError(err: unknown): string {
-  const message = err instanceof Error ? err.message : String(err)
+  const message = redactSecrets(err instanceof Error ? err.message : String(err))
 
   if (/does not exist|42P01/i.test(message)) {
     return 'As tabelas ainda não existem no Neon. Rode `npm run db:deploy` para aplicar as migrations.'
