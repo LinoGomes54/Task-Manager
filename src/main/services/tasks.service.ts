@@ -1,6 +1,7 @@
 import { queryAll, queryOne, execute, transaction, now, newId, toBool } from '../db/local'
 import { getSettings } from './settings.service'
 import { completionBlock } from '@shared/task-rules'
+import { conflitosDe, mensagemDeConflito } from '@shared/conflicts'
 import type {
   Task,
   CreateTaskInput,
@@ -143,12 +144,76 @@ export function getTask(userId: string, id: string): Task | null {
 /* Escrita                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Recusa a gravacao quando o horario ja e de outra tarefa.
+ *
+ * A checagem e do lado do servidor e nao so do formulario: tarefas tambem entram
+ * pelo encadeamento do dia e pela sincronizacao, e por esses caminhos ninguem
+ * veria um aviso na tela.
+ *
+ * So olha o dia da propria tarefa — comparar com a agenda inteira seria varrer
+ * o historico a cada gravacao sem nenhum ganho.
+ */
+function recusarSeConflitar(userId: string, candidata: Task): void {
+  if (!candidata.dueAt) return
+  if (candidata.kind !== 'task') return
+
+  const inicio = new Date(candidata.dueAt)
+  const de = new Date(inicio)
+  de.setDate(de.getDate() - 1)
+  de.setHours(0, 0, 0, 0)
+  const ate = new Date(inicio)
+  ate.setHours(23, 59, 59, 999)
+
+  const vizinhas = queryAll<Row>(
+    `SELECT * FROM tasks
+      WHERE user_id = ? AND deleted_at IS NULL AND kind = 'task'
+        AND due_at IS NOT NULL AND due_at >= ? AND due_at <= ?`,
+    [userId, de.toISOString(), ate.toISOString()]
+  ).map(mapTask)
+
+  const conflitos = conflitosDe(candidata, vizinhas)
+  if (conflitos.length > 0) throw new Error(mensagemDeConflito(conflitos))
+}
+
 export function createTask(userId: string, input: CreateTaskInput): Task {
   const title = input.title.trim()
   if (!title) throw new Error('O título da tarefa é obrigatório.')
 
   const id = newId()
   const timestamp = now()
+
+  // Monta a tarefa como ela ficaria e confere o horario antes de gravar: assim
+  // uma recusa nao deixa linha nenhuma para tras.
+  recusarSeConflitar(userId, {
+    id,
+    userId,
+    categoryId: input.categoryId ?? null,
+    title,
+    description: null,
+    priority: input.priority ?? 'medium',
+    status: input.status ?? 'pending',
+    isImportant: input.isImportant ?? false,
+    dueAt: input.dueAt ?? null,
+    remindMinutesBefore: input.remindMinutesBefore ?? 15,
+    notifiedAt: null,
+    completedAt: null,
+    recurrence: input.recurrence ?? 'none',
+    recurrenceInterval: input.recurrenceInterval ?? 1,
+    recurrenceWeekdays: input.recurrenceWeekdays ?? [],
+    recurrenceUntil: input.recurrenceUntil ?? null,
+    parentTaskId: null,
+    kind: input.kind ?? 'task',
+    durationMinutes: input.durationMinutes ?? 25,
+    autoComplete: input.autoComplete ?? false,
+    breakAfterMinutes: input.breakAfterMinutes ?? 0,
+    focusMinutes: input.focusMinutes ?? 0,
+    cycleBreakMinutes: input.cycleBreakMinutes ?? 0,
+    agendaDate: input.agendaDate ?? null,
+    agendaPosition: input.agendaPosition ?? 0,
+    createdAt: timestamp,
+    updatedAt: timestamp
+  })
 
   execute(
     `INSERT INTO tasks (
@@ -215,6 +280,10 @@ const UPDATABLE = {
 export function updateTask(userId: string, input: UpdateTaskInput): Task {
   const existing = getTask(userId, input.id)
   if (!existing) throw new Error('Tarefa não encontrada.')
+
+  // O choque e avaliado sobre como a tarefa VAI ficar, e nao como estava: mudar
+  // so a duracao tambem pode fazer ela invadir a proxima.
+  recusarSeConflitar(userId, { ...existing, ...input } as Task)
 
   const assignments: string[] = []
   const params: unknown[] = []
