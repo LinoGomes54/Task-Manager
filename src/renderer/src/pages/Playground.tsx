@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/PageHeader'
 import { Panel } from '@/components/Panel'
 import { ProgressRing } from '@/components/ProgressRing'
+import { BreakScene } from '@/components/playground/BreakScene'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { useCurrentTask } from '@/hooks/use-current-task'
 import { useCountdown, formatCountdown } from '@/hooks/use-countdown'
@@ -17,11 +18,9 @@ import {
   formatHm,
   formatDuration,
   progressOf,
-  progressBetween,
   gapsBetween,
   currentGap,
   blockCovering,
-  isCycleBreak,
   totalMinutes,
   hasOverlap,
   dayRange,
@@ -112,67 +111,11 @@ export function PlaygroundPage(): React.JSX.Element {
           {isLoading && <Skeleton className="h-40 w-full rounded-xl" />}
 
           {!isLoading && !current && descanso && (
-            <div className="py-2">
-              <div className="mb-4 flex items-start gap-3">
-                <span
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg border"
-                  style={{ color: 'var(--accent-base)' }}
-                >
-                  <Coffee className="size-4" />
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-[19px] leading-tight font-semibold">
-                    {isCycleBreak(descanso) ? 'Descanso do ciclo' : 'Descanso'}
-                  </p>
-                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--faint)' }}>
-                    <span className="font-mono">{formatHm(descanso.start)}</span> às{' '}
-                    <span className="font-mono">{formatHm(descanso.end)}</span> ·{' '}
-                    {formatDuration(descanso.minutes)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Mesmo anel do bloco de trabalho: o descanso tambem tem inicio,
-                  fim e um quanto-ja-passou. */}
-              <div className="mb-5 flex justify-center">
-                <ProgressRing progress={progressBetween(descanso.start, descanso.end, agora)}>
-                  <span className="text-[34px] leading-none font-semibold tabular-nums">
-                    {formatCountdown(restante)}
-                  </span>
-                  <span className="text-[11px]" style={{ color: 'var(--faint)' }}>
-                    de descanso
-                  </span>
-                </ProgressRing>
-              </div>
-
-              <div className="mb-4 flex items-baseline justify-between text-[12px]">
-                <span style={{ color: 'var(--faint)' }}>
-                  pausa de{' '}
-                  <span className="font-mono">{formatDuration(descanso.minutes)}</span>
-                </span>
-                <span style={{ color: 'var(--faint)' }}>
-                  volta às <span className="font-mono">{formatHm(descanso.end)}</span>
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2.5 rounded-lg border px-3 py-2.5">
-                <span className="shrink-0 text-[11px]" style={{ color: 'var(--faint)' }}>
-                  depois
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
-                  {descanso.after.task.title}
-                  {descanso.after.cycle && (
-                    <span className="ml-1.5 font-mono text-[11px]" style={{ color: 'var(--faint)' }}>
-                      {descanso.after.cycle.index}/{descanso.after.cycle.total}
-                    </span>
-                  )}
-                </span>
-                <span className="shrink-0 font-mono text-[11.5px]" style={{ color: 'var(--faint)' }}>
-                  {formatHm(descanso.after.start)}
-                </span>
-              </div>
-            </div>
+            <BreakScene
+              gap={descanso}
+              restanteTexto={formatCountdown(restante)}
+              agora={agora}
+            />
           )}
 
           {!isLoading && concluidaAgora && (

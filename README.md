@@ -322,6 +322,26 @@ quebrado. Cada tique recalcula a partir do relógio em vez de decrementar um con
 janela em segundo plano o Chromium atrasa os timers, e um contador decrescido perderia
 segundos que nunca voltariam.
 
+### A cena da pausa
+
+Quando o relógio entra numa folga, o painel **Agora** vira uma cena com o mascote — uma lua
+com crateras que flutua, pisca e sorri.
+
+- **Pausa curta** (menos de 15 min): fundo creme, mascote acordado e uma sugestão que troca a
+  cada minuto — alongar os ombros, beber água, olhar para longe por 20 segundos.
+- **Pausa longa** (15 min ou mais): vira noite. Céu escuro, 26 estrelas piscando, mascote
+  dormindo com `z`s subindo e uma frase só: *"Saia da mesa. Estes minutos são seus."*
+
+O corte entre as duas existe porque são pausas diferentes: uma é esticar na cadeira, a outra é
+levantar. A cena precisa dizer qual das duas você está vivendo.
+
+O desenho vem da animação de referência em `animation-example/`, reconstruído em CSS e SVG. O
+runtime original é um motor de vídeo de 69 KB que toca uma linha do tempo fixa — aqui o tempo
+que manda é o relógio da agenda, e a cena reflete os minutos reais que faltam. As animações
+são todas em CSS, e não num laço de JavaScript: o compositor do navegador cuida delas fora da
+thread principal, então continuam suaves enquanto o cronômetro é redesenhado a cada segundo.
+Quem tem "reduzir movimento" ligado no sistema não recebe nenhuma.
+
 ### Descanso no Playground
 
 Quando o relógio cai numa folga, o painel **Agora** mostra o descanso em vez de dizer que não

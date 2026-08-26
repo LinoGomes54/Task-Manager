@@ -295,3 +295,120 @@
     box-shadow: inset 2px 0 0 var(--accent-base);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Cena da pausa                                                       */
+/* ------------------------------------------------------------------ */
+
+/*
+  As animações da pausa são todas em CSS, e não num loop de JavaScript: o
+  compositor do navegador cuida delas fora da thread principal, então continuam
+  suaves enquanto o React redesenha o cronômetro a cada segundo.
+
+  Quem prefere menos movimento no sistema não recebe nenhuma.
+*/
+
+@keyframes mascote-flutua {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1.5deg);
+  }
+}
+
+@keyframes mascote-respira {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.03, 0.97);
+  }
+}
+
+@keyframes mascote-pisca {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.12);
+  }
+}
+
+@keyframes zzz-sobe {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(-8deg);
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-52px) rotate(10deg);
+  }
+}
+
+@keyframes estrela-pisca {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes sugestao-entra {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mascote-flutua {
+  animation: mascote-flutua 5.5s ease-in-out infinite;
+}
+
+.mascote-respira {
+  animation: mascote-respira 4.5s ease-in-out infinite;
+}
+
+/* `transform-box` faz a escala girar em torno do próprio olho, e não do canto
+   do SVG — sem isso a pálpebra desliza para fora do rosto ao fechar. */
+.mascote-pisca {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mascote-pisca 6s ease-in-out infinite;
+}
+
+.zzz {
+  animation: zzz-sobe 2.6s ease-out infinite;
+}
+
+.estrela {
+  animation: estrela-pisca 3.4s ease-in-out infinite;
+}
+
+.sugestao {
+  animation: sugestao-entra 0.45s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascote-flutua,
+  .mascote-respira,
+  .mascote-pisca,
+  .zzz,
+  .estrela,
+  .sugestao {
+    animation: none;
+  }
+}
