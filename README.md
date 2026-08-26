@@ -180,10 +180,25 @@ Para desligar, vá em **Configurações → Tarefas recorrentes**. A trava vem l
 **Espaço de trabalho → Cronograma** mostra o período como colunas de dias, cada tarefa um
 bloco. Três modos: **Dia** (1 coluna), **Semana** (7) e **Mês** (28 a 31).
 
-Arrastar um bloco de uma coluna para outra **muda a data** e **preserva o horário** — mexer
-também no horário obrigaria a inventar um, e a coluna não diz qual: ela representa um dia
-inteiro, não uma faixa da agenda. Duplo clique abre a tarefa para editar; o `+` do cabeçalho
-de cada dia cria uma já com aquela data.
+São dois gestos, com consequências diferentes:
+
+- **Soltar no fundo da coluna** — muda a data e **preserva o horário**. Mexer também no
+  horário obrigaria a inventar um, e a coluna não diz qual: ela representa um dia inteiro,
+  não uma faixa da agenda.
+- **Soltar sobre um bloco** — encaixa naquela posição e **reencadeia o dia inteiro**, partindo
+  do horário em que ele já começava e respeitando o descanso de cada tarefa. Uma linha marca
+  onde o bloco entra. Encaixar entre dois blocos é dizer "quero esta ordem", e uma ordem só
+  vale se os horários a acompanharem — deixar as horas antigas produziria uma coluna onde o
+  segundo bloco começa antes do primeiro.
+
+```
+antes:  07:00 Academia (1h, +15min)   14:00 Estudar (2h, +10min)
+soltando Estudar sobre Academia:
+depois: 07:00 Estudar (2h)   09:10 Academia (1h)
+```
+
+Duplo clique abre a tarefa para editar; o `+` do cabeçalho de cada dia cria uma já com
+aquela data.
 
 A altura do bloco é proporcional à duração, com piso e teto: sem o teto, dormir oito horas
 esmagaria todo o resto do dia numa faixa de dois pixels. As colunas rolam na horizontal quando

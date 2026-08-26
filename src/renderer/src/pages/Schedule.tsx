@@ -14,10 +14,12 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/PageHeader'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTasks, useUpdateTask } from '@/hooks/use-tasks'
 import { useCategoryMap } from '@/hooks/use-categories'
 import { useTaskDialog } from '@/stores/task-dialog.store'
-import { blocksOf, formatDuration, formatHm } from '@shared/agenda'
+import { blocksOf, chainSchedule, formatDuration, formatHm } from '@shared/agenda'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Task } from '@shared/types'
 
@@ -54,12 +56,20 @@ export function SchedulePage(): React.JSX.Element {
   const [modo, setModo] = useState<Modo>('semana')
   const [ancora, setAncora] = useState(() => new Date())
   const [arrastando, setArrastando] = useState<string | null>(null)
-  const [alvo, setAlvo] = useState<string | null>(null)
+  /**
+   * Onde o bloco cairia: em que dia e, se for entre blocos, em que posicao.
+   *
+   * `index` nulo significa "no fim da coluna", que e o gesto de so trocar de dia.
+   * Um indice concreto significa encaixar naquela posicao — outro gesto, com
+   * outra consequencia: reencadear os horarios do dia inteiro.
+   */
+  const [alvo, setAlvo] = useState<{ dia: string; index: number | null } | null>(null)
 
   const categories = useCategoryMap()
   const openNew = useTaskDialog((store) => store.openNew)
   const openEdit = useTaskDialog((store) => store.openEdit)
   const updateTask = useUpdateTask()
+  const client = useQueryClient()
   const arrastado = useRef<Task | null>(null)
 
   const dias = useMemo(() => {
@@ -113,16 +123,14 @@ export function SchedulePage(): React.JSX.Element {
   }
 
   /**
-   * Solta o bloco num dia: troca a DATA e preserva o horario.
+   * Solta o bloco num dia, **sem** posicao: troca a DATA e preserva o horario.
    *
    * Mexer tambem no horario obrigaria a inventar um, e a coluna nao diz qual —
    * ela representa um dia inteiro, nao uma faixa da agenda.
    */
-  function soltarEm(dia: Date): void {
+  function soltarNoDia(dia: Date): void {
     const task = arrastado.current
-    arrastado.current = null
-    setArrastando(null)
-    setAlvo(null)
+    limparArrasto()
     if (!task?.dueAt) return
 
     const atual = new Date(task.dueAt)
@@ -131,6 +139,57 @@ export function SchedulePage(): React.JSX.Element {
     const novo = new Date(dia)
     novo.setHours(atual.getHours(), atual.getMinutes(), 0, 0)
     updateTask.mutate({ id: task.id, dueAt: novo.toISOString() })
+  }
+
+  /**
+   * Solta o bloco **numa posicao** da coluna: reordena e reencadeia o dia.
+   *
+   * Encaixar entre dois blocos e dizer "quero esta ordem", e uma ordem so vale se
+   * os horarios a acompanharem — deixar as horas antigas produziria uma coluna
+   * onde o segundo bloco comeca antes do primeiro.
+   *
+   * O encadeamento parte do horario do primeiro bloco do dia e respeita o
+   * descanso de cada tarefa, exatamente como o "Montar o dia" do Playground.
+   */
+  function soltarNaPosicao(dia: Date, index: number): void {
+    const task = arrastado.current
+    limparArrasto()
+    if (!task?.dueAt) return
+
+    const chave = chaveDoDia(dia)
+    const atuais = (porDia.get(chave) ?? []).filter((t) => t.id !== task.id)
+    const ordem = [...atuais]
+    ordem.splice(Math.min(index, ordem.length), 0, task)
+
+    // O dia comeca onde ja comecava; se estava vazio, herda o horario do bloco
+    // que chegou — inventar um horario fixo mudaria a agenda sem ninguem pedir.
+    const referencia = atuais[0]?.dueAt ?? task.dueAt
+    const slots = chainSchedule(ordem, {
+      date: dia,
+      startTime: formatHm(new Date(referencia)),
+      breakMinutes: 0
+    })
+
+    void window.api.agenda
+      .applySchedule(
+        chave,
+        slots.map((slot) => ({ taskId: slot.task.id, dueAt: slot.start.toISOString() }))
+      )
+      .then(() => {
+        void client.invalidateQueries({ queryKey: ['tasks'] })
+        toast.success(
+          `Dia reencadeado: ${slots.length} ${slots.length === 1 ? 'tarefa' : 'tarefas'} até ${formatHm(slots[slots.length - 1].end)}`
+        )
+      })
+      .catch((erro: unknown) => {
+        toast.error(erro instanceof Error ? erro.message : 'Não foi possível reordenar')
+      })
+  }
+
+  function limparArrasto(): void {
+    arrastado.current = null
+    setArrastando(null)
+    setAlvo(null)
   }
 
   const titulo =
@@ -144,7 +203,7 @@ export function SchedulePage(): React.JSX.Element {
     <>
       <PageHeader
         title="Cronograma"
-        description="Arraste os blocos entre os dias para remarcar."
+        description="Arraste entre os dias para remarcar; solte sobre um bloco para reordenar."
         stats={titulo}
         action={
           <div className="flex items-center gap-2">
@@ -189,17 +248,22 @@ export function SchedulePage(): React.JSX.Element {
             const chave = chaveDoDia(dia)
             const lista = porDia.get(chave) ?? []
             const hoje = isSameDay(dia, new Date())
-            const recebendo = alvo === chave
+            const recebendo = alvo?.dia === chave
 
             return (
               <section
                 key={chave}
                 onDragOver={(event) => {
                   event.preventDefault()
-                  if (alvo !== chave) setAlvo(chave)
+                  // Sobre o fundo da coluna: cai no fim, sem reencadear.
+                  if (alvo?.dia !== chave || alvo?.index !== null) {
+                    setAlvo({ dia: chave, index: null })
+                  }
                 }}
-                onDragLeave={() => setAlvo((atual) => (atual === chave ? null : atual))}
-                onDrop={() => soltarEm(dia)}
+                onDragLeave={() =>
+                  setAlvo((atual) => (atual?.dia === chave ? null : atual))
+                }
+                onDrop={() => soltarNoDia(dia)}
                 className={cn(
                   'bg-card flex min-h-72 shrink-0 flex-col rounded-xl border p-2.5 transition-colors',
                   modo === 'dia' ? 'w-full' : 'w-[248px]',
@@ -244,17 +308,39 @@ export function SchedulePage(): React.JSX.Element {
                     </p>
                   )}
 
-                  {lista.map((task) => {
+                  {lista.map((task, index) => {
                     const categoria = task.categoryId
                       ? categories.get(task.categoryId)
                       : undefined
                     const blocos = blocksOf(task)
                     const inicio = blocos[0]?.start ?? new Date(task.dueAt!)
                     const feita = task.status === 'done'
+                    const encaixeAqui = alvo?.dia === chave && alvo.index === index
 
                     return (
+                      <div key={task.id} className="flex flex-col">
+                        {/* Linha de encaixe: mostra que o bloco entra ANTES deste,
+                            e nao que ele vai substitui-lo. */}
+                        <span
+                          aria-hidden
+                          className={cn(
+                            'mb-1 h-0.5 rounded-full transition-opacity',
+                            encaixeAqui ? 'opacity-100' : 'opacity-0'
+                          )}
+                          style={{ backgroundColor: 'var(--accent-base)' }}
+                        />
                       <article
-                        key={task.id}
+                        onDragOver={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          if (alvo?.dia !== chave || alvo.index !== index) {
+                            setAlvo({ dia: chave, index })
+                          }
+                        }}
+                        onDrop={(event) => {
+                          event.stopPropagation()
+                          soltarNaPosicao(dia, index)
+                        }}
                         draggable
                         onDragStart={() => {
                           arrastado.current = task
@@ -316,6 +402,7 @@ export function SchedulePage(): React.JSX.Element {
                           </p>
                         )}
                       </article>
+                      </div>
                     )
                   })}
                 </div>
