@@ -48,7 +48,10 @@ export function createWindow(options: { startHidden: boolean; closeToTray: () =>
     title: 'Task Manager',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      // O preload so usa `contextBridge` e `ipcRenderer` — nenhuma API do Node.
+      // Com o sandbox ligado, um comprometimento do renderer nao alcanca o
+      // sistema de arquivos nem cria processos, mesmo que escape do contexto.
+      sandbox: true,
       contextIsolation: true,
       nodeIntegration: false
     }
