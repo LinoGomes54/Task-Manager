@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/PageHeader'
 import { TaskList } from '@/components/tasks/TaskList'
 import { useTasks } from '@/hooks/use-tasks'
+import { dayRange } from '@shared/agenda'
 import { useTaskDialog } from '@/stores/task-dialog.store'
 import type { RecurrenceRule } from '@shared/types'
 
@@ -31,7 +32,19 @@ export function RecurrencePage({
   emptyHint
 }: RecurrencePageProps): React.JSX.Element {
   const openNew = useTaskDialog((store) => store.openNew)
-  const { data: tasks, isLoading } = useTasks({ recurrence: rule })
+
+  /*
+    A aba Diariamente e a lista do dia, e nao o historico de uma tarefa diaria.
+    Sem o recorte, a ocorrencia de ontem que ficou pendente continuava no topo e
+    empurrava para baixo o que precisa ser feito hoje. As concluidas de hoje ficam
+    — elas contam como o dia andando.
+
+    Semanal e mensal nao levam recorte: nelas a pergunta e "o que se repete", e um
+    filtro de hoje deixaria a tela vazia na maioria dos dias.
+  */
+  const hoje = dayRange()
+  const recorte = rule === 'daily' ? { from: hoje.from, to: hoje.to } : {}
+  const { data: tasks, isLoading } = useTasks({ recurrence: rule, ...recorte })
 
   return (
     <>
