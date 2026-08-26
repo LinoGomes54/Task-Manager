@@ -29,11 +29,9 @@ export function HeaderClock(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="flex min-w-0 items-baseline gap-2.5">
-      <span className="text-[15px] leading-none font-semibold tabular-nums">
-        {format(agora, 'HH:mm')}
-      </span>
-      <span className="truncate text-[12px] leading-none" style={{ color: 'var(--faint)' }}>
+    <div className="flex min-w-0 flex-col items-center leading-none">
+      <span className="text-[26px] font-semibold tabular-nums">{format(agora, 'HH:mm')}</span>
+      <span className="mt-1 truncate text-[12px]" style={{ color: 'var(--faint)' }}>
         {format(agora, "EEEE, d 'de' MMMM", { locale: ptBR })}
       </span>
     </div>

@@ -24,8 +24,9 @@ export function SyncIndicator(): React.JSX.Element {
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
-          className={cn('gap-2', tone)}
+          // Mesma altura do botao "Nova" ao lado: dois controles vizinhos com
+          // alturas diferentes fazem o cabecalho parecer desalinhado.
+          className={cn('h-10 gap-2', tone)}
           onClick={() => runSync.mutate()}
           disabled={syncing}
         >

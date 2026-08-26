@@ -22,7 +22,7 @@ function Topbar(): React.JSX.Element {
   const openNewTask = useTaskDialog((store) => store.openNew)
 
   return (
-    <header className="bg-background/80 relative z-[2] sticky top-0 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
+    <header className="bg-background/80 relative z-[2] sticky top-0 flex h-[72px] shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
       {/* So aparece com a barra recolhida: expandida, o botao de recolher fica
           dentro dela, como no design. */}
       {state === 'collapsed' && (
@@ -55,9 +55,9 @@ function Topbar(): React.JSX.Element {
 
         <div className="flex min-w-0 items-center justify-end gap-2">
           <SyncIndicator />
-          <Button size="sm" className="gap-1.5" onClick={() => openNewTask()}>
+          <Button className="h-10 gap-1.5" onClick={() => openNewTask()}>
             <Plus className="size-4" />
-            Nova tarefa
+            Nova
           </Button>
         </div>
       </div>

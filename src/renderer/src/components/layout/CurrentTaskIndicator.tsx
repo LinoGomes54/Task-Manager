@@ -49,10 +49,10 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
       }}
       title={emAndamento ? 'Em andamento agora — abrir o Playground' : 'Próxima tarefa'}
       className={cn(
-        'relative flex min-w-0 max-w-[380px] cursor-pointer items-center gap-2.5 overflow-hidden rounded-full border py-1.5 pl-3.5 transition-colors',
+        'relative flex h-10 min-w-0 max-w-[420px] cursor-pointer items-center gap-2.5 overflow-hidden rounded-full border pl-4 transition-colors',
         // Sem o botao de concluir, o `pr` curto existia so para acomoda-lo: o
         // horario encostava na borda. Com botao, ele mesmo faz o espaco.
-        podeConcluir ? 'pr-1.5' : 'pr-3.5',
+        podeConcluir ? 'pr-2' : 'pr-4',
         emAndamento ? 'border-[color:var(--accent-base)]' : 'border-border hover:border-ring/40'
       )}
     >
@@ -81,12 +81,12 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
         />
       )}
 
-      <span className="relative min-w-0 truncate text-[12.5px] font-medium">
+      <span className="relative min-w-0 truncate text-[13.5px] font-medium">
         {bloco.task.title}
       </span>
 
       <span
-        className="relative shrink-0 font-mono text-[11.5px]"
+        className="relative shrink-0 font-mono text-[12px]"
         style={{ color: 'var(--faint)' }}
       >
         {emAndamento
@@ -103,7 +103,7 @@ export function CurrentTaskIndicator(): React.JSX.Element | null {
           }}
           title="Concluir esta tarefa"
           aria-label={`Concluir ${bloco.task.title}`}
-          className="hover:bg-accent relative flex size-6 shrink-0 items-center justify-center rounded-full transition-colors"
+          className="hover:bg-accent relative flex size-7 shrink-0 items-center justify-center rounded-full transition-colors"
         >
           <Check className="size-3.5" />
         </button>
