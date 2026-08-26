@@ -175,6 +175,23 @@ Duas coisas continuam liberadas de propósito:
 
 Para desligar, vá em **Configurações → Tarefas recorrentes**. A trava vem ligada.
 
+### Cronograma em blocos
+
+**Espaço de trabalho → Cronograma** mostra o período como colunas de dias, cada tarefa um
+bloco. Três modos: **Dia** (1 coluna), **Semana** (7) e **Mês** (28 a 31).
+
+Arrastar um bloco de uma coluna para outra **muda a data** e **preserva o horário** — mexer
+também no horário obrigaria a inventar um, e a coluna não diz qual: ela representa um dia
+inteiro, não uma faixa da agenda. Duplo clique abre a tarefa para editar; o `+` do cabeçalho
+de cada dia cria uma já com aquela data.
+
+A altura do bloco é proporcional à duração, com piso e teto: sem o teto, dormir oito horas
+esmagaria todo o resto do dia numa faixa de dois pixels. As colunas rolam na horizontal quando
+não cabem — no modo mês são até 31, e espremer todas na largura da tela deixaria cada bloco
+ilegível.
+
+Soltar num horário já ocupado é recusado pela mesma regra de conflito do formulário.
+
 ### Conflito de horários
 
 Duas tarefas não podem ocupar o mesmo horário. A checagem vive em `shared/`, como as outras

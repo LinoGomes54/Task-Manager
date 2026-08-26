@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarClock, CalendarDays, CalendarHeart, CalendarRange, LayoutDashboard, ListChecks, LogOut, Palette, PanelLeft, Repeat, Search, Settings, Star, Sun, Tags, Timer } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarHeart, CalendarRange, Columns3, LayoutDashboard, ListChecks, LogOut, Palette, PanelLeft, Repeat, Search, Settings, Star, Sun, Tags, Timer } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -38,7 +38,8 @@ const WORKSPACE = [
   { to: '/', label: 'Painel', meta: 'visão do dia', icon: LayoutDashboard, end: true },
   { to: '/tarefas', label: 'Tarefas', meta: 'do dia', icon: ListChecks },
   { to: '/calendario', label: 'Calendário', meta: 'mês', icon: CalendarDays },
-  { to: '/playground', label: 'Playground', meta: 'agenda do dia', icon: Timer }
+  { to: '/playground', label: 'Playground', meta: 'agenda do dia', icon: Timer },
+  { to: '/cronograma', label: 'Cronograma', meta: 'blocos', icon: Columns3 }
 ]
 
 const RECURRENCE = [
