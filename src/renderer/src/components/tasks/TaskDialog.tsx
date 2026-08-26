@@ -44,6 +44,8 @@ import {
 } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
 import { formatHm, formatDuration } from '@shared/agenda'
+import { conflitosDe, proximaDepoisDe, mensagemDeConflito } from '@shared/conflicts'
+import { useTasks } from '@/hooks/use-tasks'
 import { useSettings } from '@/hooks/use-settings'
 
 /** Duracoes sugeridas: um pomodoro, meio, dois e uma hora. */
@@ -67,6 +69,7 @@ const DATE_REMINDER_OPTIONS = [
 import type {
   CreateTaskInput,
   RecurrenceRule,
+  Task,
   TaskKind,
   TaskPriority,
   TaskStatus
@@ -249,10 +252,14 @@ export function TaskDialog(): React.JSX.Element {
     return true
   }
 
-  function buildPayload(): CreateTaskInput {
-    // Numa tarefa repetida o app calcula a primeira ocorrencia a partir da regra;
-    // so a tarefa avulsa (e a anual) usa a data escolhida na mao.
-    const dueAt = (() => {
+  /**
+   * Prazo que a tarefa tera ao salvar.
+   *
+   * Fica fora do `buildPayload` porque a previa de conflitos precisa do mesmo
+   * valor: o aviso na tela tem de falar do horario que vai ser gravado, e nao de
+   * uma segunda conta parecida.
+   */
+  const dueAtAtual = (() => {
       if (form.recurrence === 'none') {
         return form.hasDueDate
           ? combineDateTime(form.dueDate ?? new Date(), form.dueTime)
@@ -279,6 +286,9 @@ export function TaskDialog(): React.JSX.Element {
         durationMinutes: form.durationMinutes
       })
     })()
+
+  function buildPayload(): CreateTaskInput {
+    const dueAt = dueAtAtual
 
     return {
       title: form.title,
@@ -350,6 +360,66 @@ export function TaskDialog(): React.JSX.Element {
   // descanso nem conclusao automatica — todos esses campos dependem de um bloco.
   const ocupaTempo = form.kind === 'task'
   const ehData = form.kind === 'date'
+
+  /*
+    Vizinhanca do horario escolhido, calculada enquanto o formulario esta aberto.
+
+    Usa as mesmas funcoes que o processo principal usa para recusar a gravacao,
+    entao o aviso na tela e a regra do backend nunca discordam. Dizer "esse
+    horario ja e de outra coisa" antes de salvar evita a viagem ate o erro.
+  */
+  const previa: Task = {
+    id: editing?.id ?? '__novo__',
+    userId: '',
+    categoryId: null,
+    title: form.title || 'Esta tarefa',
+    description: null,
+    priority: form.priority,
+    status: form.status,
+    isImportant: form.isImportant,
+    dueAt: dueAtAtual,
+    remindMinutesBefore: form.remindMinutesBefore,
+    notifiedAt: null,
+    completedAt: null,
+    recurrence: form.recurrence,
+    recurrenceInterval: form.recurrenceInterval,
+    recurrenceWeekdays: form.recurrenceWeekdays,
+    recurrenceUntil: null,
+    parentTaskId: null,
+    kind: form.kind,
+    durationMinutes: Math.max(1, form.durationMinutes),
+    autoComplete: form.autoComplete,
+    breakAfterMinutes: Math.max(0, form.breakAfterMinutes),
+    focusMinutes: form.usaCiclos ? Math.max(1, form.focusMinutes) : 0,
+    cycleBreakMinutes: form.usaCiclos ? Math.max(0, form.cycleBreakMinutes) : 0,
+    agendaDate: null,
+    agendaPosition: 0,
+    createdAt: '',
+    updatedAt: ''
+  }
+
+  // Janela de um dia em volta do prazo escolhido. Buscar a agenda inteira para
+  // conferir um horario seria varrer o historico a cada tecla digitada.
+  const janela = (() => {
+    if (!dueAtAtual) return null
+    const base = new Date(dueAtAtual)
+    const de = new Date(base)
+    de.setDate(de.getDate() - 1)
+    de.setHours(0, 0, 0, 0)
+    const ate = new Date(base)
+    ate.setHours(23, 59, 59, 999)
+    return { from: de.toISOString(), to: ate.toISOString() }
+  })()
+
+  const { data: vizinhas = [] } = useTasks(
+    janela ? { from: janela.from, to: janela.to, kind: 'task' } : { kind: 'task' }
+  )
+
+  const conflitos = dueAtAtual && form.kind === 'task' ? conflitosDe(previa, vizinhas) : []
+  const proxima =
+    dueAtAtual && form.kind === 'task' && conflitos.length === 0
+      ? proximaDepoisDe(previa, vizinhas)
+      : null
 
   const ciclos = (() => {
     if (!form.usaCiclos || form.kind === 'reminder') return null
@@ -862,6 +932,25 @@ export function TaskDialog(): React.JSX.Element {
                     </div>
                   </div>
 
+                  {conflitos.length > 0 && (
+                    <p
+                      className="border-destructive/40 text-destructive rounded-lg border px-3 py-2 text-[12px]"
+                      role="alert"
+                    >
+                      {mensagemDeConflito(conflitos)}
+                    </p>
+                  )}
+
+                  {proxima && (
+                    <p
+                      className="rounded-lg border px-3 py-2 text-[12px]"
+                      style={{ color: 'var(--faint)' }}
+                    >
+                      Depois desta vem “{proxima.task.title}”, às{' '}
+                      <span className="font-mono">{formatHm(proxima.start)}</span>.
+                    </p>
+                  )}
+
                   <div className="grid gap-2">
                     <Label>{ehData ? 'Avisar' : 'Lembrete'}</Label>
                     <Select
@@ -894,7 +983,14 @@ export function TaskDialog(): React.JSX.Element {
               <X className="size-4" />
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || !form.title.trim() || semDiaMarcado}>
+            {/* Com choque de horario o botao trava: o backend recusaria de qualquer
+                jeito, e deixar clicar so trocaria o aviso na tela por um erro. */}
+            <Button
+              type="submit"
+              disabled={
+                saving || !form.title.trim() || semDiaMarcado || conflitos.length > 0
+              }
+            >
               {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Criar tarefa'}
             </Button>
           </DialogFooter>

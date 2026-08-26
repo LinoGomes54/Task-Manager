@@ -175,6 +175,33 @@ Duas coisas continuam liberadas de propósito:
 
 Para desligar, vá em **Configurações → Tarefas recorrentes**. A trava vem ligada.
 
+### Conflito de horários
+
+Duas tarefas não podem ocupar o mesmo horário. A checagem vive em `shared/`, como as outras
+regras: o formulário **avisa antes** e o processo principal **recusa** a gravação — tarefas
+também entram pelo encadeamento do dia e pela sincronização, e por esses caminhos ninguém
+veria um aviso na tela.
+
+```
+Academia 14:00–15:00 + 15min de descanso
+
+14:30  →  "Esse horário já é de “Academia”, das 14:00–15:00."   salvar travado
+15:05  →  mesmo aviso (está dentro do descanso)                 salvar travado
+15:15  →  livre
+12:00  →  livre, e avisa: "Depois desta vem “Academia”, às 14:00."
+```
+
+**O descanso conta como tempo ocupado.** Encaixar a próxima tarefa dentro da folga da anterior
+anula a folga, e a agenda volta a ser uma fila sem respiro. Marcar descanso zero é o jeito de
+dizer "pode encostar" — encostar não é cruzar: uma tarefa que termina 15:00 e outra que começa
+15:00 convivem.
+
+**Lembretes e datas ficam de fora**: nenhum dos dois ocupa tempo, então "tomar remédio às 14h"
+pode coexistir com qualquer coisa.
+
+Ao escolher o horário sem conflito, o formulário mostra **qual tarefa vem depois** — dá para
+ver o encaixe antes de salvar.
+
 ### Duração, descanso e ciclos
 
 O formulário pergunta **quando a tarefa acaba**, não quanto ela dura — é assim que a agenda
