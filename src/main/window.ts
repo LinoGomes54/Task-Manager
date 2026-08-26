@@ -14,16 +14,23 @@ import { EVENTS } from '@shared/channels'
 let mainWindow: BrowserWindow | null = null
 let quitting = false
 
-export function isQuitting(): boolean {
-  return quitting
-}
-
 export function setQuitting(value: boolean): void {
   quitting = value
 }
 
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow
+}
+
+/** `true` so para `http` e `https` — o resto nao chega ao sistema operacional. */
+function ehLinkWeb(url: string): boolean {
+  try {
+    const protocolo = new URL(url).protocol
+    return protocolo === 'http:' || protocolo === 'https:'
+  } catch {
+    // URL malformada nao e link nenhum.
+    return false
+  }
 }
 
 export function createWindow(options: { startHidden: boolean; closeToTray: () => boolean }): BrowserWindow {
@@ -63,10 +70,42 @@ export function createWindow(options: { startHidden: boolean; closeToTray: () =>
     mainWindow = null
   })
 
-  // Links externos abrem no navegador padrao, nunca dentro do app.
+  /*
+    Links externos abrem no navegador padrao, nunca dentro do app — e **so**
+    `http` e `https`.
+
+    `shell.openExternal` entrega a URL ao sistema operacional, que resolve o
+    esquema. No Windows isso alcanca `file:`, `smb:` e os handlers de protocolo
+    registrados por outros programas, entao uma URL vinda de dado sincronizado
+    poderia disparar algo fora do app. A lista de permissao inverte o padrao:
+    o que nao for web nao sai daqui.
+  */
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void shell.openExternal(url)
+    if (ehLinkWeb(url)) void shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  /*
+    A janela nunca navega para fora da propria interface.
+
+    Sem esta trava, uma navegacao de topo carregaria uma pagina remota **com o
+    preload anexado** — e `window.api`, que fala com o banco e com a sessao,
+    ficaria exposto a essa origem. A CSP do `index.html` nao protege aqui: ela
+    morre junto com o documento que a declara.
+  */
+  mainWindow.webContents.on('will-navigate', (evento, url) => {
+    const atual = mainWindow?.webContents.getURL() ?? ''
+    if (url === atual) return
+
+    const interno =
+      url.startsWith('file://') ||
+      (process.env['ELECTRON_RENDERER_URL'] !== undefined &&
+        url.startsWith(process.env['ELECTRON_RENDERER_URL']))
+
+    if (interno) return
+
+    evento.preventDefault()
+    if (ehLinkWeb(url)) void shell.openExternal(url)
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

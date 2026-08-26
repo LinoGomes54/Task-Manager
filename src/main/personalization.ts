@@ -49,6 +49,22 @@ const MIMES: Record<string, string> = {
 
 const VAZIO: Personalization = { alarmSound: null, avatar: null, background: null }
 
+/**
+ * Aceita so o nome de arquivo que este modulo mesmo gerou.
+ *
+ * Os nomes sao gravados num JSON dentro da pasta de dados, e um JSON editado a
+ * mao (ou trocado por outro processo) poderia trazer `../../..` e fazer o app
+ * ler qualquer arquivo do disco e devolve-lo ao renderer como `data:` URI. O
+ * formato e conhecido — `tipo-uuid.ext` — entao exigi-lo fecha a porta sem
+ * depender de normalizar caminho.
+ */
+function nomeValido(nome: unknown): string | null {
+  if (typeof nome !== 'string' || !nome) return null
+  return /^(alarmSound|avatar|background)-[0-9a-f-]{36}\.[a-z0-9]{2,5}$/i.test(nome)
+    ? nome
+    : null
+}
+
 function pastaMedia(): string {
   const dir = join(app.getPath('userData'), 'media')
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
@@ -62,11 +78,10 @@ function arquivoConfig(): string {
 function ler(): Personalization {
   try {
     const bruto = JSON.parse(readFileSync(arquivoConfig(), 'utf8')) as Partial<Personalization>
-    const campo = (v: unknown): string | null => (typeof v === 'string' && v ? v : null)
     return {
-      alarmSound: campo(bruto.alarmSound),
-      avatar: campo(bruto.avatar),
-      background: campo(bruto.background)
+      alarmSound: nomeValido(bruto.alarmSound),
+      avatar: nomeValido(bruto.avatar),
+      background: nomeValido(bruto.background)
     }
   } catch {
     return { ...VAZIO }
