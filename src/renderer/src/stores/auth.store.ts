@@ -20,7 +20,3 @@ export const useAuthStore = create<AuthStore>((set) => ({
   setSession: (session) => set({ session }),
   setLoading: (loading) => set({ loading })
 }))
-
-export function useUser(): Session['user'] | null {
-  return useAuthStore((state) => state.session?.user ?? null)
-}

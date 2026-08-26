@@ -476,7 +476,7 @@ export function toggleImportant(userId: string, id: string): Task {
  * — uma tarefa de segunda, quarta e sexta anda de dois em dois dias dentro da
  * semana, e so aplica o intervalo ao virar para a semana seguinte.
  */
-export function advanceDate(
+function advanceDate(
   date: Date,
   rule: RecurrenceRule,
   interval: number,

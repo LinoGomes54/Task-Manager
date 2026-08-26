@@ -32,7 +32,7 @@ export interface Ocupacao {
  * tarefa dentro da folga da anterior anula a folga, e a agenda volta a ser uma
  * fila sem respiro. Marcar descanso zero e o jeito de dizer "pode encostar".
  */
-export function ocupacaoDe(task: Task): Ocupacao | null {
+function ocupacaoDe(task: Task): Ocupacao | null {
   const blocos = blocksOf(task)
   if (blocos.length === 0) return null
 

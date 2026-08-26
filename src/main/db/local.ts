@@ -91,10 +91,6 @@ export function closeLocalDb(): void {
   db = null
 }
 
-export function getDbPath(): string {
-  return join(app.getPath('userData'), 'task-manager.db')
-}
-
 /* ------------------------------------------------------------------ */
 /* Helpers de consulta                                                 */
 /* ------------------------------------------------------------------ */

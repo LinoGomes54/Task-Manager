@@ -45,10 +45,6 @@ export function formatDueDate(iso: string | null): string {
   return format(date, "dd 'de' MMM, HH:mm", { locale: ptBR })
 }
 
-export function formatFullDate(iso: string): string {
-  return format(parseISO(iso), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-}
-
 export function formatMonth(date: Date): string {
   return format(date, "MMMM 'de' yyyy", { locale: ptBR })
 }

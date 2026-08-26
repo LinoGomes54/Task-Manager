@@ -45,7 +45,7 @@ export function isCycleBreak(gap: GapBlock): boolean {
   return gap.before.task.id === gap.after.task.id
 }
 
-export function blockOf(task: Task): TaskBlock | null {
+function blockOf(task: Task): TaskBlock | null {
   if (!task.dueAt) return null
   // So `task` ocupa faixa na linha do dia. Lembrete avisa e some; data marcada
   // vale o dia inteiro. Nenhum dos dois reserva tempo — sem essa distincao,
@@ -93,11 +93,6 @@ export function blocksOf(task: Task): TaskBlock[] {
     end: b.end,
     cycle: { index: index + 1, total: blocos.length }
   }))
-}
-
-/** Quantos ciclos de foco a tarefa tem. Um, quando nao ha divisao. */
-export function cycleCount(task: Task): number {
-  return blocksOf(task).length
 }
 
 /** Blocos do dia, em ordem cronologica. Tarefas sem prazo ficam de fora. */
@@ -225,7 +220,7 @@ export function minutesLeft(block: TaskBlock, at: Date = new Date()): number {
 }
 
 /** Quanto de um intervalo ja passou, de 0 a 100. */
-export function progressBetween(start: Date, end: Date, at: Date = new Date()): number {
+function progressBetween(start: Date, end: Date, at: Date = new Date()): number {
   const total = end.getTime() - start.getTime()
   if (total <= 0) return 0
   const passou = at.getTime() - start.getTime()
@@ -235,11 +230,6 @@ export function progressBetween(start: Date, end: Date, at: Date = new Date()): 
 /** Quanto do bloco ja passou, de 0 a 100. */
 export function progressOf(block: TaskBlock, at: Date = new Date()): number {
   return progressBetween(block.start, block.end, at)
-}
-
-/** Minutos que faltam para a folga acabar. */
-export function minutesLeftIn(gap: GapBlock, at: Date = new Date()): number {
-  return Math.max(0, Math.ceil((gap.end.getTime() - at.getTime()) / 60_000))
 }
 
 /**
