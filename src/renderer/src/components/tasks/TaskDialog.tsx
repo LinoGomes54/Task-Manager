@@ -174,7 +174,11 @@ export function TaskDialog(): React.JSX.Element {
     // Repeticao precisa de prazo para o agendamento da proxima ocorrencia fazer
     // sentido, entao ao abrir ja com uma regra sugerida marcamos hoje por padrao.
     const suggestedRecurrence = defaults?.recurrence ?? 'none'
-    const needsDueDate = Boolean(defaults?.dueAt) || suggestedRecurrence !== 'none'
+    // Uma data marcada e, por definicao, um dia — sem prazo ela nao existe. Sem
+    // isto, abrir "Nova data" pela aba Datas trazia o formulario sem o campo de
+    // dia nenhum, e nao havia como dizer quando o aniversario cai.
+    const needsDueDate =
+      Boolean(defaults?.dueAt) || suggestedRecurrence !== 'none' || defaults?.kind === 'date'
 
     setForm({
       ...EMPTY,
